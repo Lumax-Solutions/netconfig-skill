@@ -4,7 +4,7 @@ Part of the `network-config` skill. Read `../SKILL.md` first for the workflow an
 
 ## MikroTik RouterOS (v7; note v6 differences)
 
-Default filter policy is **accept** – always build an explicit firewall. Use Safe Mode (Ctrl+X) when remote.
+Default filter policy is **accept** – always build an explicit firewall. Use Safe Mode (Ctrl+X) when remote. It rolls back if the session drops (after a lost TCP connection this can take up to ~9 minutes), but if a very large change fills its history buffer, Safe Mode exits and the protection is gone — split big changes into smaller Safe Mode sessions, or use a scheduler-based rollback.
 Avoid `/system reset-configuration` unless asked — build the VLAN design incrementally: keep the port you're managed through on its current untagged VLAN until you've moved to a new access port, then convert it.
 Adding the port you're connected through to a bridge (or changing its PVID) drops that session — do it in its own step, or paste from an `.rsc` file with `/import`, so the rest of the script isn't cut off.
 Rule order is top-down: put guest/isolation drops **above** generic accepts (e.g. `accept protocol=icmp`) or they never apply.

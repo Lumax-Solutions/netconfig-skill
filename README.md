@@ -137,6 +137,7 @@ Run by a separate agent with its own harness and checklist, written before gener
 |---|---|
 | Answer quality, v1.2.0 (3 cases, skill content supplied vs plain model) | 20/20 vs 19/20 — and it **found a factual error** in the skill (FortiGate `match-vip` default) |
 | Retest after the fix, v1.2.1 | 20/20 vs 18/20; the `match-vip` regression check passes |
+| Release check, v1.3.0 | 20/20 vs 19/20; activation again 8/8 and 0/4; the VPN troubleshooting request now reads the FortiGate and Cisco references (fix confirmed in two runs); 3 `SOURCES.md` rows spot-checked, no contradictions |
 | Automatic activation, v1.2.1 (installed skill, ordinary requests, 12 fresh sessions) | Loaded for **8/8** networking requests (5 vendors, Arabic, review, migration, Linux) and **0/4** unrelated ones (general concepts, Python networking code) |
 
 Limits: one run per case, graded by the same agent that ran the test (not blind), model version not

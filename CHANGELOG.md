@@ -34,6 +34,12 @@ Theme: claims you can trace, and advice proven in a lab.
 - Palo Alto: PAN-OS 11.1+ Panorama-managed firewalls have Automated Commit Recovery.
 - Huawei `commit trial` and Arista session-confirm details now marked "verify with `?`".
 
+### Release check (independent, Codex CLI)
+- Answer quality 20/20 (baseline 19/20); activation 8/8 relevant and 0/4 controls; the VPN
+  troubleshooting case now loads the FortiGate and Cisco references; 3 SOURCES.md rows spot-checked.
+- MikroTik: noted that Safe Mode exits (and stops protecting) when a change exceeds its history
+  capacity — found during the source spot-check.
+
 ### Changed
 - Agents read the platform reference files for troubleshooting too, not only before writing config
   (an independent activation test showed a VPN troubleshooting request loading only the core).
