@@ -54,7 +54,7 @@ commands' logic:
 | Where | nftables | Kernel | Checks |
 |---|---|---|---|
 | Development sandbox (IPv4 only, no IPv6 in its kernel) | 1.0.9 | 6.18 | 24/24 |
-| GitHub Actions `ubuntu-24.04` (IPv4 + IPv6) | see the latest [CI run](https://github.com/Lumax-Solutions/netconfig-skill/actions/workflows/validate.yml) | | |
+| GitHub Actions `ubuntu-24.04` (IPv4 + IPv6, `--require-ipv6`) | Ubuntu 24.04 package | runner kernel | 44/44, every push — see the latest [CI run](https://github.com/Lumax-Solutions/netconfig-skill/actions/workflows/validate.yml) |
 
 The lab also **fails** a broken answer: a variant that applies the same rules without arming the
 rollback timer fails the "original access restored" check.
