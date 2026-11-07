@@ -69,7 +69,7 @@ The skill is the folder [`network-config/`](network-config). It follows the open
 **Claude Code**
 ```bash
 # personal (all projects)
-git clone https://github.com/<you>/netconfig-skill.git
+git clone https://github.com/Lumax-Solutions/netconfig-skill.git
 cp -r netconfig-skill/network-config ~/.claude/skills/
 # or per project: copy into <project>/.claude/skills/
 ```
