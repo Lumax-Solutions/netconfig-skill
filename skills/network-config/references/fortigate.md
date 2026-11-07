@@ -116,7 +116,13 @@ The port-forward VIP above is used as dstaddr in the WAN→LAN policy.
 - Inbound policies reference the VIP (not the real IP) as dstaddr; don't also enable NAT on them
   unless you intend to hide the client IP.
 
-Policy order matters: `config firewall policy` → `move <id> before <id>`.
+Policy order matters (list order, not policy ID): `config firewall policy` → `move <id> before <id>`.
+On an existing box, prefer explicit free policy IDs (check with `show firewall policy <id>`) and put the
+`move` in the same block as the new policy, rather than `edit 0` plus a later move.
+Deny policies do **not** match VIP (DNAT) traffic unless they have `set match-vip enable` (default
+disable in 7.x), which is why an allow-VIP policy below a broad deny can still work. Place new VIP
+policies above broad denies anyway, and check `match-vip` on existing denies.
+Hit counts for a policy: `diagnose firewall iprope show 100004 <policy-id>`.
 SNAT pool: `config firewall ippool` + `set ippool enable` / `set poolname` in policy.
 Central NAT mode (`config system settings` → `set central-nat enable`) moves NAT into
 `config firewall central-snat-map` — check which mode the box uses before writing NAT.

@@ -26,10 +26,13 @@ troubleshooting.
 
 ## What makes it different from asking an LLM directly
 
-- **Structured, safe answers.** Every change comes as *Assumptions → Pre-checks/backup →
-  Config → Verification → Rollback*, with the platform's automatic rollback armed
-  (`reload in`, `configure revert timer`, `commit confirmed`, RouterOS Safe Mode, AOS-CX
-  `checkpoint auto`, Arista `commit timer` …).
+- **Built for changing live networks.** For an existing device it follows a change workflow:
+  collect the current state with read-only commands → propose a minimal Add/Modify/Remove diff and
+  flag conflicts (name clashes, shadowing rules, overlapping VIPs/NAT) → arm the platform's
+  automatic rollback (`configure revert timer`, `commit confirmed`, Safe Mode, `checkpoint auto` …)
+  → apply in phases → test what must work **and** what must stay blocked → save only after it passes.
+  It knows what each rollback restores (running vs saved config) on 11 platforms.
+- **Proportional.** Quick questions get quick answers; greenfield builds skip the state collection.
 - **Version-aware.** Known syntax changes are spelled out (e.g. FortiOS IKE debug filter changed in
   7.4.1, SSL-VPN tunnel mode removed in 7.6.3, RouterOS 7.20 BGP instances, PAN-OS advanced
   routing engine, VyOS 1.4 firewall syntax).
@@ -38,7 +41,8 @@ troubleshooting.
   NAT, ASA security-level implicit permits during migrations, stateless WAN ACLs that break PAT
   return traffic, Junos BGP not being RFC 8212-safe by default, `no-readvertise` killing exports,
   MikroTik bridge VLAN filtering lockouts, Docker bypassing UFW …
-- **Small context footprint.** A ~150-line core plus one reference file per platform, loaded only
+- **IPv6 and dual-stack aware**, with a checklist for the classic gap: IPv4 locked down, IPv6 wide open.
+- **Small context footprint.** A ~220-line core plus one reference file per platform, loaded only
   when needed.
 
 ## Test results
@@ -57,9 +61,24 @@ objective checks and reviewed by a separate model acting as a senior network eng
 | FortiGate debug-flow diagnosis | 6/6 | 6/6 | Both correct |
 | Juniper SRX BGP (prompt in Arabic) | 7/8 | 8/8 | Baseline: `no-readvertise` blocks the advertisement, possible SSH lockout, wrong rollback number |
 
+**v1.2 vs v1.1** (existing-device changes, November 2026):
+
+| Case | v1.1 | v1.2 | Difference |
+|---|---|---|---|
+| Change a live FortiGate with planted conflicts (busy VIP port, name clash, deny rule above) | 4/8 | 10/10 | v1.1: no diff, single paste, no blocked-traffic test |
+| FortiGate ↔ Cisco IPsec, remote | 7/8 | 10/10 | v1.1 edited the Cisco WAN ACL before arming the rollback timer |
+
 The checklists alone don't separate the two well; the real gap is in **errors that would break
 traffic or lock you out**, which the skill avoided and the baseline didn't. Treat these as a small
 sample, not a guarantee.
+
+## Platform coverage
+
+| Depth | Platforms |
+|---|---|
+| **Detailed** (full syntax, version notes, tested scenarios) | Cisco IOS/IOS-XE, Cisco ASA, FortiGate, Palo Alto PAN-OS, Juniper Junos, MikroTik RouterOS |
+| **Standard** (core syntax and troubleshooting) | Cisco NX-OS, Check Point, Huawei VRP/USG, Aruba AOS-CX, Linux / Windows / cloud firewalls |
+| **Brief** (pointers; verify on the device) | Cisco FTD, Arista EOS, SonicWall, VyOS/EdgeOS, pfSense/OPNsense, Sophos, UniFi |
 
 ## Install
 
@@ -103,7 +122,7 @@ Per-agent paths, native install commands, verification and troubleshooting:
 ```
 skills/network-config/        ← the skill (copy this folder)
 ├── SKILL.md                  core workflow, safety rules, vendor detection, concept map
-├── references/               one file per platform + audit and migration guides
+├── references/               one file per platform + change workflow, IPv6, sanitizing, audit, migration
 └── evals/                    test cases (prompt.md, case.yaml, graders/)
 INSTALL.md                    installation guide for every agent
 install.ps1 / install.sh      one-line installers

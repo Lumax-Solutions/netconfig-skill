@@ -3,6 +3,40 @@
 All notable changes to this skill. Versions follow [SemVer](https://semver.org/):
 MAJOR = structure/behaviour change, MINOR = new platform or section, PATCH = corrections.
 
+## [1.2.0] — 2026-11-07
+
+Focus: safe changes to existing networks (based on an external review).
+
+### Added
+- **Existing-device change workflow** in the core: collect state (read-only) → minimal
+  Add/Modify/Remove diff with conflict checks → prepare recovery → apply in phases → acceptance
+  test (allowed *and* blocked traffic) → save after verification. Quick questions and greenfield
+  builds skip the parts they don't need.
+- `references/change-workflow.md`: read-only state commands per vendor, conflict checks (name/ID
+  clashes, shadowing, overlaps, NAT mode, references, HA), a running-vs-saved recovery table for
+  11 platforms, phasing rules and the acceptance-matrix template.
+- `references/ipv6.md`: dual-stack checklist and IPv6 configs for Cisco, FortiGate, Palo Alto,
+  Junos, MikroTik and Linux.
+- `references/sanitizing-configs.md`: how to redact secrets while keeping a config diagnosable,
+  and where secrets hide per vendor.
+- Coverage depth labels (Detailed / Standard / Brief) per platform.
+- FortiGate `match-vip` behaviour, explicit-ID policy placement; Cisco IKEv2 policy side effects,
+  PSK `?` pitfall, licence reload, per-peer IKEv2 debugging.
+- Eval case `fortigate-existing-publish-server` with planted conflicts; extra assertions on
+  rollback timing and blocked-traffic tests.
+
+### Changed
+- Output format: one assumptions/conflicts table, change plan only for brownfield edits, recovery
+  in three bullets, acceptance matrix of about six rows; management-adjacent edits always under an
+  armed rollback with saving only after confirmation.
+- Removed absolute safety wording ("never cut off").
+
+### Test results
+- Existing-device FortiGate change: v1.2 10/10 vs v1.1 4/8 on the original checks.
+- FortiGate↔Cisco IPsec: v1.2 10/10 vs v1.1 7/8; v1.1 edited the WAN ACL before arming the
+  rollback timer, v1.2 does not.
+- After tightening, answers are ~1.1× the length of v1.1's instead of ~1.6×.
+
 ## [1.1.0] — 2026-11-07
 
 ### Fixed (from an external review)

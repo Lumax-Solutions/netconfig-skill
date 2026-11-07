@@ -139,6 +139,16 @@ the SEC/securityk9 licence enables IPsec/ZBFW; without HSEC (`license feature hs
 crypto is capped at 1,000 tunnels / 250 Mbps — check with `show license summary`.
 A Cisco SVTI always uses "any any" (0.0.0.0/0) traffic selectors, so the peer's phase 2
 must use 0.0.0.0/0 too (on FortiGate: src/dst-subnet 0.0.0.0 0.0.0.0) or the tunnel won't come up.
+On a router that already has IKEv2 tunnels, a new `crypto ikev2 policy` without `match` applies to
+every local address and replaces the default (smart-default) policy — existing peers relying on the
+defaults can stop negotiating. Check `show crypto ikev2 policy` first; scope the new policy with
+`match address local <wan-ip>` or reuse the existing one.
+Don't use `?` in a pre-shared key typed or pasted at the CLI (it triggers help and corrupts the key).
+Enabling the security / HSEC licence may need a reload — plan it as a separate maintenance step.
+`copy running-config bootflash:<file>` asks to confirm the destination name — press Enter.
+Debug one peer only: `debug crypto condition peer ipv4 <peer-ip>` then `debug crypto ikev2`
+(`undebug all` after). Common IKEv2 failures: `NO_PROPOSAL_CHOSEN` (crypto mismatch),
+`AUTHENTICATION_FAILED` (PSK/identity), `TS_UNACCEPTABLE` (selectors — use 0/0 with a VTI).
 Traffic routed into a VTI isn't PATed (the tunnel isn't `ip nat outside`), so the existing
 PAT needs no exemption; for crypto-map VPNs, deny the VPN subnets in the NAT ACL instead.
 

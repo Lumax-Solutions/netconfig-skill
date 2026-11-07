@@ -3,7 +3,7 @@ name: network-config
 description: Expert CLI configuration, review, troubleshooting and cross-vendor migration for routers, switches and firewalls — Cisco (IOS/IOS-XE, NX-OS, ASA, FTD), Fortinet FortiGate (FortiOS), Palo Alto (PAN-OS), Juniper (Junos/SRX/EX), MikroTik (RouterOS), Check Point (Gaia), Huawei (VRP/USG), Aruba/HPE (AOS-CX), Arista EOS, SonicWall, VyOS/EdgeOS, pfSense/OPNsense — plus host and cloud firewalls (UFW, nftables, iptables, Windows Firewall, AWS Security Groups/NACLs, Azure NSG, GCP firewall rules, Kubernetes NetworkPolicy). Use whenever the user pastes or asks for a device config, CLI commands, show/diagnose output, VLANs, routing (static/OSPF/BGP), ACLs, firewall policies, NAT, VPN/IPsec, HA, hardening, or wants to convert a config from one vendor to another — even if they don't name the vendor.
 license: MIT
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
   docs-verified: "2026-11"
 ---
 
@@ -21,47 +21,101 @@ This file holds the workflow and the rules that apply to every vendor. Platform 
 for migrations or VPNs between vendors, read both. Don't write vendor syntax from memory when a
 reference exists; the references contain version-specific corrections that memory often gets wrong.
 
-| Platform / task | Read |
-|---|---|
-| Cisco IOS / IOS-XE routers, Catalyst switches | `references/cisco-ios.md` |
-| Cisco Nexus (NX-OS) | `references/cisco-nxos.md` |
-| Cisco ASA, Firepower FTD | `references/cisco-asa-ftd.md` |
-| Fortinet FortiGate | `references/fortigate.md` |
-| Palo Alto PAN-OS | `references/paloalto.md` |
-| Juniper Junos (SRX, MX, EX, QFX) | `references/juniper.md` |
-| MikroTik RouterOS | `references/mikrotik.md` |
-| Check Point Gaia | `references/checkpoint.md` |
-| Huawei VRP / USG (also H3C Comware, similar) | `references/huawei.md` |
-| Aruba / HPE (AOS-CX, ProCurve) | `references/aruba.md` |
-| Arista EOS | `references/arista.md` |
-| SonicWall, VyOS/EdgeOS, pfSense/OPNsense, Sophos, UniFi | `references/others.md` |
-| Linux (UFW/nftables/iptables), Windows Firewall, AWS/Azure/GCP, Kubernetes | `references/host-cloud.md` |
-| Reviewing / auditing a config | `references/audit-checklist.md` + the platform file |
-| Converting a config between vendors | `references/migration-guide.md` + both platform files |
+Coverage depth: **Detailed** = full syntax, version notes and tested scenarios; **Standard** = core
+syntax and troubleshooting; **Brief** = pointers only. For Standard/Brief platforms, say so in your
+answer and tell the user to verify syntax on the device (`?`, vendor docs).
+
+| Platform / task | Read | Depth |
+|---|---|---|
+| Cisco IOS / IOS-XE routers, Catalyst switches | `references/cisco-ios.md` | Detailed |
+| Cisco Nexus (NX-OS) | `references/cisco-nxos.md` | Standard |
+| Cisco ASA, Firepower FTD | `references/cisco-asa-ftd.md` | Detailed (ASA) / Brief (FTD) |
+| Fortinet FortiGate | `references/fortigate.md` | Detailed |
+| Palo Alto PAN-OS | `references/paloalto.md` | Detailed |
+| Juniper Junos (SRX, MX, EX, QFX) | `references/juniper.md` | Detailed |
+| MikroTik RouterOS | `references/mikrotik.md` | Detailed |
+| Check Point Gaia | `references/checkpoint.md` | Standard |
+| Huawei VRP / USG (also H3C Comware, similar) | `references/huawei.md` | Standard |
+| Aruba / HPE (AOS-CX, ProCurve) | `references/aruba.md` | Standard |
+| Arista EOS | `references/arista.md` | Brief |
+| SonicWall, VyOS/EdgeOS, pfSense/OPNsense, Sophos, UniFi | `references/others.md` | Brief |
+| Linux (UFW/nftables/iptables), Windows Firewall, AWS/Azure/GCP, Kubernetes | `references/host-cloud.md` | Standard |
+| **Any change to a live / existing device** | `references/change-workflow.md` | — |
+| IPv6 or dual-stack anything | `references/ipv6.md` + the platform file | — |
+| User pastes a config (or asks how to share one) | `references/sanitizing-configs.md` | — |
+| Reviewing / auditing a config | `references/audit-checklist.md` + the platform file | — |
+| Converting a config between vendors | `references/migration-guide.md` + both platform files | — |
 
 ## Workflow
-1. **Identify vendor, platform and OS version.** Syntax differs a lot between versions
-   (e.g. FortiOS 6.x vs 7.x, ASA pre/post 8.3 NAT, RouterOS v6 vs v7, PAN-OS
-   virtual-router vs logical-router, VyOS 1.3 vs 1.4 firewall). If the user pasted
-   config, detect the vendor from it (table below). **If the version is unknown and the
-   commands are for a live / production device, ask for it before writing commands**, and
-   give the one command that shows it (`show version`, `get system status`, `show system info`,
-   `show version` on Junos, `/system resource print`, `display version`). Only if the user
-   can't check or says to go ahead anyway, or the request is a lab, explanation or review:
-   state the version you assumed in one line and mark every version-sensitive command
-   ("7.4.1+ syntax; on 7.2 use …").
-2. **Clarify only what you truly need** (interfaces/zones, IP plan, peers). Otherwise
-   use clear placeholders and state assumptions.
-3. **Produce the answer in this structure** for any change request:
-   - **Assumptions** – vendor/version, interface names, IPs used.
-   - **Pre-checks / backup** – commands to save current config and check state.
-   - **Configuration** – one copy-pasteable code block per device, in the vendor's
-     native format, in a valid order (objects before policies that reference them).
-   - **Verification** – show/diagnose commands and what "good" looks like.
-   - **Rollback** – exact commands to undo, plus the platform's safety net
-     (`commit confirmed`, `reload in`, config revert, safe mode).
-4. **Flag risk** clearly: anything that touches the interface/route you are managing
-   the device through, HA, or a reboot. Follow the lockout-prevention checklist below.
+
+### 0. Size the request
+- **Quick question** ("command to show BGP neighbours", "what does this line mean"): just answer,
+  with the version caveat if relevant. None of the steps below.
+- **New build / lab / greenfield** (no existing config to conflict with): steps 1, 2 and the
+  output structure below, without the state-collection step.
+- **Change to a live / existing device** (the default whenever the user is changing something
+  that is running): follow the **existing-device change workflow** below and read
+  `references/change-workflow.md` for the per-vendor commands.
+
+### 1. Identify vendor, platform and OS version
+Syntax differs a lot between versions (e.g. FortiOS 6.x vs 7.x, ASA pre/post 8.3 NAT, RouterOS
+v6 vs v7, PAN-OS virtual-router vs logical-router, VyOS 1.3 vs 1.4 firewall). If the user pasted
+config, detect the vendor from it (table below). **If the version is unknown and the commands are
+for a live device, ask for it before writing commands**, with the one command that shows it
+(`show version`, `get system status`, `show system info`, `/system resource print`,
+`display version`). Only if the user can't check or says to go ahead anyway, or the request is a
+lab, explanation or review: state the version you assumed and mark every version-sensitive
+command ("7.4.1+ syntax; on 7.2 use …").
+
+### 2. Clarify only what you truly need
+Interfaces/zones, IP plan, peers, which path the user manages the device through. Otherwise use
+clear placeholders and state assumptions. Ask in one message, not a drip of questions.
+
+### 3. Existing-device change workflow
+1. **Collect state (read-only).** Before proposing changes, get the parts of the running config
+   the change touches: relevant interfaces, routes, existing policies/ACLs and their order, NAT
+   mode, objects with similar names, the management path, HA/cluster status. Give the exact
+   read-only commands (per vendor in `change-workflow.md`) and ask for the output — or work from a
+   config the user already pasted. Keep it proportional: ask only for what could conflict.
+   If the user can't provide it, proceed but list each assumption about the existing config as a
+   risk to check.
+2. **Propose a minimal diff.** Change only what the goal needs. Present it as **Add / Modify /
+   Remove** against the current config, and call out conflicts: duplicate object names or rule
+   IDs, an earlier rule that shadows the new one, overlapping subnets/VIPs, NAT already in use,
+   a route that would be overridden. Never silently overwrite an existing object.
+3. **Prepare recovery.** Any management-adjacent edit (WAN/management ACL, VTY/SSH access,
+   `allowaccess`/trusted hosts, routes to the admin network) goes **under an armed rollback**, and
+   nothing is saved until after the confirm step. Backup command, the platform's automatic rollback armed *before* the
+   risky step, exact confirm and cancel commands, and what restores the **running** config vs the
+   **saved/startup** config (they differ: on Cisco a `write memory` before `reload cancel` makes a
+   `reload in` restore the *new* config). Say what still works if the session drops.
+4. **Apply in phases.** One code block per phase; anything that touches the management path,
+   routing to the management network, or HA gets its own block with a verification step after it.
+   Low-risk object creation can share a block.
+5. **Test with an acceptance matrix** (below): what must now work **and** what must still be blocked.
+6. **Save / commit permanently only after verification passes**, then remove the rollback timer
+   and record what changed.
+
+### 4. Output structure for any change
+- **Assumptions & conflicts** – one table: Item | Found / assumed | Action. Vendor/version, the
+  management path, and every conflict found (or to check) appear here **once**; don't restate them
+  in prose elsewhere. Mention coverage depth only if it isn't Detailed.
+- **Change plan** – Add / Modify / Remove, only when something existing is modified or removed
+  (skip it for an all-new build: the config already says it).
+- **Recovery** – at most three bullets: backup command, how this platform saves (running vs saved),
+  and the armed rollback with its confirm/cancel commands (or why none is needed).
+- **Configuration** – a code block per phase (per device), in a valid order (objects before the
+  policies that reference them), each phase followed by a one-line check. Phase 0 read-only checks
+  only for results that change what gets pasted, each with what to look for ("if X appears, use Y").
+- **Acceptance matrix** – Source | Destination | Service | Expected | How to test, about **6 rows**:
+  the new flows, at least one flow that must stay **blocked**, management access, and one existing
+  service that must keep working.
+- **Save & rollback** – the save/commit command (after confirm) and the exact undo per phase,
+  valid after the last phase.
+
+Keep it tight: no repeated facts, optional extras (alternative designs, extra hardening, a long
+troubleshooting table) as one-line pointers the user can ask for. Flag risk clearly: anything on
+the management path, HA, or that needs a reboot.
 
 ### Conventions
 - Use RFC 5737 documentation IPs (`192.0.2.0/24`, `198.51.100.0/24`, `203.0.113.0/24`)
@@ -145,6 +199,8 @@ tell the user which version it applies to and how to confirm on the box.
 5. Keep your current session open; test with a **new** session before confirming.
 6. Change one thing at a time on the management path; never change management IP, route and ACL in a single step.
 7. Confirm/commit only after verification passes; otherwise let the timer roll back.
+8. Know what your rollback restores: running config (revert timers, `commit confirmed`, Safe Mode) vs
+   saved config (`reload in`, reboot-based reverts). Saving before confirming defeats reload-based rollback.
 
 ## Troubleshooting method (any vendor)
 Work bottom-up and show the exact command on that vendor for each step:
