@@ -3,3 +3,7 @@ __pycache__/
 .DS_Store
 *-workspace/
 skills/network-config/evals/results/
+
+test-runs/
+test-sources/
+__pycache__/

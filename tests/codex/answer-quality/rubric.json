@@ -1,0 +1,28 @@
+{
+  "A": [
+    "Detect occupied public IP/port",
+    "Do not silently overwrite old VIP/server",
+    "Detect WEB-02 name clash",
+    "Detect deny shadowing/order",
+    "Stop or request alternate mapping/explicit replacement authorization",
+    "Backup/recovery proportional to proposed change",
+    "Minimal change plan",
+    "Acceptance includes blocked traffic and existing service"
+  ],
+  "B": [
+    "Arm rollback before access restriction",
+    "Warn reload causes outage/restores startup",
+    "Permit only admin /32 then implicit deny",
+    "Apply access-class to all VTY lines",
+    "Keep current session and test NEW session",
+    "Cancel reload BEFORE saving",
+    "Preserve authentication/routing/interface ACLs",
+    "Exact undo/removal instructions"
+  ],
+  "C": [
+    "Ask version before changing config",
+    "Provide read-only version command",
+    "Collect interfaces/IP/routes/management path",
+    "No speculative mutating commands"
+  ]
+}

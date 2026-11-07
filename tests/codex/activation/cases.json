@@ -1,0 +1,62 @@
+[
+  [
+    "01_cisco_vlan",
+    true,
+    "We have a Catalyst 9300 running IOS-XE 17.9. I need to add staff VLAN 20 and carry it over the existing uplink on Gi1/0/48 without disturbing the other VLANs. Can you help me prepare the change?"
+  ],
+  [
+    "02_fortigate_publish",
+    true,
+    "Our FortiGate 100F runs FortiOS 7.4.5. Publish an internal web server on 10.0.0.12:443 through wan1 using public IP 203.0.113.11. What should I check and configure on the existing firewall?"
+  ],
+  [
+    "03_juniper_bgp",
+    true,
+    "عايز أعمل BGP مع مزود الخدمة على Juniper SRX300 شغال Junos 23.4. الـ AS بتاعي 65010 والـ peer 192.0.2.1 والـ AS بتاعه 65020. أنا متصل بالجهاز عن بعد، أبدأ إزاي؟"
+  ],
+  [
+    "04_mikrotik_guest",
+    true,
+    "I have a MikroTik hAP ax3 on RouterOS 7.20. Staff and guests currently share the bridge. I want a guest VLAN with Internet access but no access to staff or router management. I am connected through ether5. Help me plan it."
+  ],
+  [
+    "05_vpn_troubleshoot",
+    true,
+    "The site-to-site VPN between our FortiGate and Cisco ISR is up but no traffic passes. Both are production devices. What outputs do you need to troubleshoot selectors, routes and NAT?"
+  ],
+  [
+    "06_config_review",
+    true,
+    "Please review this router configuration for risky management access and suggest a staged fix:\nhostname BRANCH\ninterface GigabitEthernet0/0\n ip address 203.0.113.2 255.255.255.252\n no shutdown\nline vty 0 4\n password example-redacted\n login\n transport input telnet\nip route 0.0.0.0 0.0.0.0 203.0.113.1"
+  ],
+  [
+    "07_vendor_migration",
+    true,
+    "We are replacing a Cisco ASA 9.16 with a Palo Alto on PAN-OS 11.1. Can you help translate our existing NAT and security rules and identify what cannot be converted directly?"
+  ],
+  [
+    "08_linux_firewall",
+    true,
+    "I administer an Ubuntu 24.04 server over SSH. I want nftables to allow SSH only from 198.51.100.10 and HTTPS publicly, covering both IPv4 and IPv6. How should I safely change its existing rules?"
+  ],
+  [
+    "09_general_networking",
+    false,
+    "Explain the difference between TCP and UDP to someone who is new to networking. Use everyday examples."
+  ],
+  [
+    "10_python_network_script",
+    false,
+    "Write a small Python script using only the standard library that resolves a hostname to IPv4 and IPv6 addresses and prints them. It should handle DNS errors gracefully."
+  ],
+  [
+    "11_conceptual_routing",
+    false,
+    "At a conceptual level, how does a router decide where to send a packet? I am studying networking fundamentals and do not need device configuration or CLI commands."
+  ],
+  [
+    "12_python_http",
+    false,
+    "Show a Python urllib example that fetches JSON from an HTTPS URL with a timeout, checks the status, and handles exceptions. Do not run the request."
+  ]
+]

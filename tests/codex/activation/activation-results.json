@@ -1,0 +1,229 @@
+[
+  {
+    "case": "01_cisco_vlan",
+    "expected": true,
+    "complete": true,
+    "loaded": true,
+    "network_config_reads": [
+      {
+        "path": "SKILL.md",
+        "exit_code": 0,
+        "output_characters": 17473
+      },
+      {
+        "path": "references/cisco-ios.md",
+        "exit_code": 0,
+        "output_characters": 7278
+      },
+      {
+        "path": "references/change-workflow.md",
+        "exit_code": 0,
+        "output_characters": 12533
+      }
+    ]
+  },
+  {
+    "case": "02_fortigate_publish",
+    "expected": true,
+    "complete": true,
+    "loaded": true,
+    "network_config_reads": [
+      {
+        "path": "SKILL.md",
+        "exit_code": 0,
+        "output_characters": 17473
+      },
+      {
+        "path": "references/change-workflow.md",
+        "exit_code": 0,
+        "output_characters": 12533
+      },
+      {
+        "path": "references/fortigate.md",
+        "exit_code": 0,
+        "output_characters": 9726
+      }
+    ]
+  },
+  {
+    "case": "03_juniper_bgp",
+    "expected": true,
+    "complete": true,
+    "loaded": true,
+    "network_config_reads": [
+      {
+        "path": "SKILL.md",
+        "exit_code": 0,
+        "output_characters": 17473
+      },
+      {
+        "path": "references/change-workflow.md",
+        "exit_code": 0,
+        "output_characters": 12533
+      },
+      {
+        "path": "references/juniper.md",
+        "exit_code": 0,
+        "output_characters": 3805
+      }
+    ]
+  },
+  {
+    "case": "04_mikrotik_guest",
+    "expected": true,
+    "complete": true,
+    "loaded": true,
+    "network_config_reads": [
+      {
+        "path": "SKILL.md",
+        "exit_code": 0,
+        "output_characters": 17473
+      },
+      {
+        "path": "references/change-workflow.md",
+        "exit_code": 0,
+        "output_characters": 12533
+      },
+      {
+        "path": "references/mikrotik.md",
+        "exit_code": 0,
+        "output_characters": 4594
+      }
+    ]
+  },
+  {
+    "case": "05_vpn_troubleshoot",
+    "expected": true,
+    "complete": true,
+    "loaded": true,
+    "network_config_reads": [
+      {
+        "path": "SKILL.md",
+        "exit_code": 0,
+        "output_characters": 17473
+      }
+    ]
+  },
+  {
+    "case": "06_config_review",
+    "expected": true,
+    "complete": true,
+    "loaded": true,
+    "network_config_reads": [
+      {
+        "path": "SKILL.md",
+        "exit_code": 0,
+        "output_characters": 17473
+      },
+      {
+        "path": "references/change-workflow.md",
+        "exit_code": 0,
+        "output_characters": 12533
+      },
+      {
+        "path": "references/audit-checklist.md",
+        "exit_code": 0,
+        "output_characters": 1592
+      },
+      {
+        "path": "references/sanitizing-configs.md",
+        "exit_code": 0,
+        "output_characters": 3884
+      },
+      {
+        "path": "references/cisco-ios.md",
+        "exit_code": 0,
+        "output_characters": 7278
+      }
+    ]
+  },
+  {
+    "case": "07_vendor_migration",
+    "expected": true,
+    "complete": true,
+    "loaded": true,
+    "network_config_reads": [
+      {
+        "path": "SKILL.md",
+        "exit_code": 0,
+        "output_characters": 17473
+      },
+      {
+        "path": "references/cisco-asa-ftd.md",
+        "exit_code": 0,
+        "output_characters": 3051
+      },
+      {
+        "path": "references/paloalto.md",
+        "exit_code": 0,
+        "output_characters": 3084
+      },
+      {
+        "path": "references/migration-guide.md",
+        "exit_code": 0,
+        "output_characters": 2972
+      },
+      {
+        "path": "references/sanitizing-configs.md",
+        "exit_code": 0,
+        "output_characters": 3884
+      }
+    ]
+  },
+  {
+    "case": "08_linux_firewall",
+    "expected": true,
+    "complete": true,
+    "loaded": true,
+    "network_config_reads": [
+      {
+        "path": "SKILL.md",
+        "exit_code": 0,
+        "output_characters": 17473
+      },
+      {
+        "path": "references/host-cloud.md",
+        "exit_code": 0,
+        "output_characters": 4974
+      },
+      {
+        "path": "references/change-workflow.md",
+        "exit_code": 0,
+        "output_characters": 12533
+      },
+      {
+        "path": "references/ipv6.md",
+        "exit_code": 0,
+        "output_characters": 7106
+      }
+    ]
+  },
+  {
+    "case": "09_general_networking",
+    "expected": false,
+    "complete": true,
+    "loaded": false,
+    "network_config_reads": []
+  },
+  {
+    "case": "10_python_network_script",
+    "expected": false,
+    "complete": true,
+    "loaded": false,
+    "network_config_reads": []
+  },
+  {
+    "case": "11_conceptual_routing",
+    "expected": false,
+    "complete": true,
+    "loaded": false,
+    "network_config_reads": []
+  },
+  {
+    "case": "12_python_http",
+    "expected": false,
+    "complete": true,
+    "loaded": false,
+    "network_config_reads": []
+  }
+]

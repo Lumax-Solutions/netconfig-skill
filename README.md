@@ -107,7 +107,8 @@ Run by a separate agent with its own harness and checklist, written before gener
 | Automatic activation, v1.2.1 (installed skill, ordinary requests, 12 fresh sessions) | Loaded for **8/8** networking requests (5 vendors, Arabic, review, migration, Linux) and **0/4** unrelated ones (general concepts, Python networking code) |
 
 Limits: one run per case, graded by the same agent that ran the test (not blind), model version not
-pinned. They're smoke tests, not statistical proof or tests on real hardware. The value shown is
+pinned. They're smoke tests, not statistical proof or tests on real hardware. The test kit is in
+[`tests/codex/`](tests/codex/README.md), so anyone can repeat these runs on a new release. The value shown is
 consistency (backup, conflict checks, blocked-traffic tests in every answer) more than large score gaps.
 
 ## Platform coverage

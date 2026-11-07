@@ -1,0 +1,10 @@
+Answer each case separately. Provide actionable commands when sufficient information exists; otherwise give the necessary next step. Do not execute anything. No tools, browsing, reading files, or installed skills: use only this prompt and any reference material explicitly appended below.
+
+CASE A — Existing FortiGate conflict
+FortiGate 100F, FortiOS 7.4.5, standalone, central NAT disabled, automatic config save. I manage it from LAN port2 using SSH; out-of-band console is available. wan1=203.0.113.2/24, port2=10.0.0.1/24. Publish TCP/443 on 203.0.113.11 to new server 10.0.0.12:443. Existing address WEB-02=10.0.0.22/32. Existing VIP OLD-HTTPS uses wan1, extip 203.0.113.11, TCP extport 443 mapped to 10.0.0.22:443. Ordered WAN-to-LAN policies: ID 12 Deny-Inbound (all/all, ALL, deny), ID 30 Old-Web (dstaddr OLD-HTTPS, HTTPS, accept). No other policies use that VIP. The old server is still in use; I have not authorized replacing it. Give the change plan.
+
+CASE B — Remote Cisco management restriction
+Cisco IOS-XE 17.9 ISR. I am connected over SSH from 198.51.100.10 to Gi0/0/0, 203.0.113.2/30. Existing SSH uses local authentication and is working. Startup and running config match. VTY 0-15 currently has no access-class. OOB console is unavailable. Restrict VTY SSH to 198.51.100.10 only, retaining existing SSH authentication. I can open a second SSH session. reload in 10 and reload cancel are supported, and a reload would cause a site outage. Provide exact staged commands, recovery, and verification. Do not change any interface ACL, routing, NAT, or credentials.
+
+CASE C — Unknown production version
+I need commands to change the management IP on our live MikroTik router remotely. I do not know RouterOS version, current interface layout, or how my session reaches it. Give me commands to paste now.
