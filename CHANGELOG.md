@@ -3,6 +3,13 @@
 All notable changes to this skill. Versions follow [SemVer](https://semver.org/):
 MAJOR = structure/behaviour change, MINOR = new platform or section, PATCH = corrections.
 
+## [Unreleased]
+
+### Changed
+- Agents now read the platform reference files for troubleshooting too, not only before writing
+  config (an independent activation test showed a VPN troubleshooting request loading only the core).
+- README: independent Codex test results (answer quality, `match-vip` retest, 8/8 + 0/4 activation).
+
 ## [1.2.1] — 2026-11-07
 
 ### Fixed (found by an independent Codex smoke test)

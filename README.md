@@ -96,6 +96,20 @@ The checklists alone don't separate the two well; the real gap is in **errors th
 traffic or lock you out**, which the skill avoided and the baseline didn't. Treat these as a small
 sample, not a guarantee.
 
+### Independent tests (OpenAI Codex CLI, November 2026)
+
+Run by a separate agent with its own harness and checklist, written before generating answers.
+
+| Test | Result |
+|---|---|
+| Answer quality, v1.2.0 (3 cases, skill content supplied vs plain model) | 20/20 vs 19/20 — and it **found a factual error** in the skill (FortiGate `match-vip` default) |
+| Retest after the fix, v1.2.1 | 20/20 vs 18/20; the `match-vip` regression check passes |
+| Automatic activation, v1.2.1 (installed skill, ordinary requests, 12 fresh sessions) | Loaded for **8/8** networking requests (5 vendors, Arabic, review, migration, Linux) and **0/4** unrelated ones (general concepts, Python networking code) |
+
+Limits: one run per case, graded by the same agent that ran the test (not blind), model version not
+pinned. They're smoke tests, not statistical proof or tests on real hardware. The value shown is
+consistency (backup, conflict checks, blocked-traffic tests in every answer) more than large score gaps.
+
 ## Platform coverage
 
 | Depth | Platforms |

@@ -10,8 +10,9 @@ bad ACL on the management interface can lock them out remotely.
 ## How to use this skill
 
 This file holds the workflow and the rules that apply to every vendor. Platform syntax lives in
-`references/`. **Before writing any config, consult the platform section(s) below for the platform(s) involved** —
-for migrations or VPNs between vendors, read both. Don't write vendor syntax from memory when a
+`references/`. **Before writing any config or troubleshooting steps, read the reference file(s) for the platform(s)
+involved** — they hold the version-correct show/diagnose commands too. For migrations, VPNs or
+problems between vendors, read both. Don't write vendor syntax from memory when a
 reference exists; the references contain version-specific corrections that memory often gets wrong.
 
 Coverage depth: **Detailed** = full syntax, version notes and tested scenarios; **Standard** = core
