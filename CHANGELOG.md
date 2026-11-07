@@ -3,6 +3,16 @@
 All notable changes to this skill. Versions follow [SemVer](https://semver.org/):
 MAJOR = structure/behaviour change, MINOR = new platform or section, PATCH = corrections.
 
+## [1.2.1] — 2026-11-07
+
+### Fixed (found by an independent Codex smoke test)
+- FortiGate `match-vip`: the reference said deny policies default to `disable` in 7.x. Correct:
+  disabled up to 7.2.3; from 7.2.4 new deny policies default to `enable`, and policies carried
+  over by an upgrade keep their previous value. The skill now tells the agent to check the actual
+  setting (`show full-configuration firewall policy <id> | grep match-vip`) instead of assuming,
+  and cites the FortiOS 7.2.4 release notes (bug 819937).
+- Added a regression check for this to the `fortigate-existing-publish-server` eval case.
+
 ## [1.2.0] — 2026-11-07
 
 Focus: safe changes to existing networks (based on an external review).
