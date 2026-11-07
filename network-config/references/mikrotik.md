@@ -1,6 +1,6 @@
 # MikroTik — RouterOS v7
 
-Part of the `network-device-config` skill. Read `../SKILL.md` first for the workflow and safety rules.
+Part of the `network-config` skill. Read `../SKILL.md` first for the workflow and safety rules.
 
 ## MikroTik RouterOS (v7; note v6 differences)
 

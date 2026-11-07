@@ -7,7 +7,7 @@ body:
     attributes:
       label: File
       description: Which file contains the error?
-      placeholder: network-device-config/references/fortigate.md
+      placeholder: network-config/references/fortigate.md
     validations:
       required: true
   - type: input

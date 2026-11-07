@@ -1,6 +1,6 @@
 # Config review / audit checklist
 
-Part of the `network-device-config` skill. Read `../SKILL.md` first for the workflow and safety rules.
+Part of the `network-config` skill. Read `../SKILL.md` first for the workflow and safety rules.
 
 ## Config review / audit checklist
 

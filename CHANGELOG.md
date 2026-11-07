@@ -11,7 +11,7 @@ MAJOR = structure/behaviour change, MINOR = new platform or section, PATCH = cor
   Cisco IOS/IOS-XE, NX-OS, ASA/FTD, FortiGate, Palo Alto, Juniper, MikroTik, Check Point,
   Huawei, Aruba/HPE, Arista, SonicWall/VyOS/pfSense/Sophos/UniFi, host & cloud firewalls.
 - Config audit checklist and cross-vendor migration guide.
-- 7 evaluation cases (`network-device-config/evals/`) in the `claude plugin eval` layout.
+- 7 evaluation cases (`network-config/evals/`) in the `claude plugin eval` layout.
 - `scripts/build_agents_md.py` single-file build (`dist/AGENTS.md`) for tools without skill support.
 - `scripts/validate.py` and a GitHub Actions workflow.
 

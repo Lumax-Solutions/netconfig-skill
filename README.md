@@ -1,4 +1,4 @@
-# network-device-config
+# netconfig-skill
 
 An **Agent Skill** that turns an AI coding/chat agent into a careful senior network engineer for
 routers, switches and firewalls — it writes paste-ready configs, reviews/audits configs, reads
@@ -45,7 +45,7 @@ troubleshooting.
 
 Answers were generated with and without the skill on the same prompts, then graded against
 objective checks and reviewed by a separate model acting as a senior network engineer
-(November 2026). Cases live in [`network-device-config/evals/`](network-device-config/evals).
+(November 2026). Cases live in [`network-config/evals/`](network-config/evals).
 
 | Case | Without skill | With skill | Notable difference found in review |
 |---|---|---|---|
@@ -63,24 +63,24 @@ sample, not a guarantee.
 
 ## Install
 
-The skill is the folder [`network-device-config/`](network-device-config). It follows the open
+The skill is the folder [`network-config/`](network-config). It follows the open
 [Agent Skills](https://agentskills.io/) format (`SKILL.md` + `references/`).
 
 **Claude Code**
 ```bash
 # personal (all projects)
-git clone https://github.com/<you>/network-device-config-skill.git
-cp -r network-device-config-skill/network-device-config ~/.claude/skills/
+git clone https://github.com/<you>/netconfig-skill.git
+cp -r netconfig-skill/network-config ~/.claude/skills/
 # or per project: copy into <project>/.claude/skills/
 ```
 
-**Claude apps (claude.ai / desktop)** — zip the `network-device-config` folder and upload it under
+**Claude apps (claude.ai / desktop)** — zip the `network-config` folder and upload it under
 *Settings → Capabilities → Skills* (requires a plan with skills enabled).
 
 **Claude API / Agent SDK** — upload the folder as a custom skill, or place it in the skills
 directory your agent loads.
 
-**Other agents that support Agent Skills** — copy the `network-device-config` folder into the
+**Other agents that support Agent Skills** — copy the `network-config` folder into the
 tool's skills directory (see your tool's docs).
 
 **Anything else (Cursor rules, Copilot instructions, Open WebUI, Ollama, LM Studio, any system prompt)** —
@@ -102,7 +102,7 @@ python scripts/build_agents_md.py --only fortigate,cisco-ios --out my-network-pr
 ## Repository layout
 
 ```
-network-device-config/        ← the skill (copy this folder)
+network-config/        ← the skill (copy this folder)
 ├── SKILL.md                  core workflow, safety rules, vendor detection, concept map
 ├── references/               one file per platform + audit and migration guides
 └── evals/                    test cases (prompt.md, case.yaml, graders/)
@@ -113,11 +113,11 @@ scripts/build_agents_md.py    builds dist/AGENTS.md
 
 ## Running the evaluations
 
-Each case under `network-device-config/evals/` contains the user prompt and one grader file per
+Each case under `network-config/evals/` contains the user prompt and one grader file per
 check. With Claude Code ≥ 2.1.269 you can run them with and without the skill:
 
 ```bash
-cd network-device-config
+cd network-config
 claude plugin eval . --allow-tools Write,Edit,Bash
 ```
 

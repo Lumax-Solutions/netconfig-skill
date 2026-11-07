@@ -1,6 +1,6 @@
 # Host & cloud firewalls — UFW, nftables, iptables, Windows, AWS, Azure, GCP, Kubernetes
 
-Part of the `network-device-config` skill. Read `../SKILL.md` first for the workflow and safety rules.
+Part of the `network-config` skill. Read `../SKILL.md` first for the workflow and safety rules.
 
 ## Host-based & cloud firewalls (servers, cloud, Kubernetes)
 

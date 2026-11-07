@@ -1,6 +1,6 @@
 # Cross-vendor migration guide
 
-Part of the `network-device-config` skill. Read `../SKILL.md` first for the workflow and safety rules.
+Part of the `network-config` skill. Read `../SKILL.md` first for the workflow and safety rules.
 
 ## Cross-vendor migration (e.g. Cisco ASA → FortiGate, Cisco → Palo Alto)
 

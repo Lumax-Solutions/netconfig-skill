@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the network-device-config skill.
+"""Validate the network-config skill.
 
 Checks:
   - SKILL.md has YAML frontmatter with `name` and `description`
@@ -17,7 +17,7 @@ import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-SKILL = ROOT / "network-device-config"
+SKILL = ROOT / "network-config"
 errors: list[str] = []
 
 

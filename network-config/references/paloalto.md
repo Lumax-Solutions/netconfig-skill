@@ -1,6 +1,6 @@
 # Palo Alto Networks — PAN-OS
 
-Part of the `network-device-config` skill. Read `../SKILL.md` first for the workflow and safety rules.
+Part of the `network-config` skill. Read `../SKILL.md` first for the workflow and safety rules.
 
 ## Palo Alto Networks PAN-OS (set format)
 

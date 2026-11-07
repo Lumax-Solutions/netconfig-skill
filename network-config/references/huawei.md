@@ -1,6 +1,6 @@
 # Huawei — VRP & USG
 
-Part of the `network-device-config` skill. Read `../SKILL.md` first for the workflow and safety rules.
+Part of the `network-config` skill. Read `../SKILL.md` first for the workflow and safety rules.
 
 ## Huawei VRP (routers/switches) & USG firewalls
 
