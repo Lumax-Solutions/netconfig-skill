@@ -3,6 +3,19 @@
 All notable changes to this skill. Versions follow [SemVer](https://semver.org/):
 MAJOR = structure/behaviour change, MINOR = new platform or section, PATCH = corrections.
 
+## [1.1.0] — 2026-11-07
+
+### Changed
+- Skill moved to `skills/network-config/`, the standard location that cross-agent installers
+  (`npx skills`, Hermes, Gemini CLI) discover automatically.
+
+### Added
+- `INSTALL.md`: install guide for Claude Code, Claude apps, Codex, Antigravity, Gemini CLI, Cursor,
+  GitHub Copilot, Windsurf/Devin, Cline, Roo, Kilo, Kiro, OpenCode, Hermes, Goose, Amp, Trae, Qwen Code,
+  Factory Droid and Continue, plus a copy-paste prompt that lets an agent install the skill itself.
+- `install.ps1` (Windows) and `install.sh` (macOS/Linux): one-line installers that copy the skill into
+  `~/.agents/skills` and each detected agent's own skills folder; `--project`, `--uninstall`, `--dry-run`.
+
 ## [1.0.0] — 2026-11-07
 
 ### Added

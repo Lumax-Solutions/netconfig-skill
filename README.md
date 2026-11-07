@@ -45,7 +45,7 @@ troubleshooting.
 
 Answers were generated with and without the skill on the same prompts, then graded against
 objective checks and reviewed by a separate model acting as a senior network engineer
-(November 2026). Cases live in [`network-config/evals/`](network-config/evals).
+(November 2026). Cases live in [`skills/network-config/evals/`](skills/network-config/evals).
 
 | Case | Without skill | With skill | Notable difference found in review |
 |---|---|---|---|
@@ -63,32 +63,31 @@ sample, not a guarantee.
 
 ## Install
 
-The skill is the folder [`network-config/`](network-config). It follows the open
-[Agent Skills](https://agentskills.io/) format (`SKILL.md` + `references/`).
+**Quickest** — installs into every agent on your computer (Claude Code, Codex, Cursor, Copilot,
+Antigravity, Gemini CLI, Windsurf, Cline, Roo, Kiro, OpenCode, Hermes and more):
 
-**Claude Code**
+```powershell
+# Windows (PowerShell)
+irm https://raw.githubusercontent.com/Lumax-Solutions/netconfig-skill/main/install.ps1 | iex
+```
 ```bash
-# personal (all projects)
-git clone https://github.com/Lumax-Solutions/netconfig-skill.git
-cp -r netconfig-skill/network-config ~/.claude/skills/
-# or per project: copy into <project>/.claude/skills/
+# macOS / Linux
+curl -fsSL https://raw.githubusercontent.com/Lumax-Solutions/netconfig-skill/main/install.sh | bash
+# or, with Node.js, pick agents interactively:
+npx skills add https://github.com/Lumax-Solutions/netconfig-skill/tree/main/skills/network-config -g
 ```
 
-**Claude apps (claude.ai / desktop)** — zip the `network-config` folder and upload it under
-*Settings → Capabilities → Skills* (requires a plan with skills enabled).
+**From inside your agent** — paste the install prompt from [INSTALL.md](INSTALL.md#2-paste-a-prompt-into-your-agent)
+and the agent installs the skill itself.
 
-**Claude API / Agent SDK** — upload the folder as a custom skill, or place it in the skills
-directory your agent loads.
+**Claude apps (claude.ai / Desktop)** — zip `skills/network-config` and upload it under
+*Customize → Skills*.
 
-**Other agents that support Agent Skills** — copy the `network-config` folder into the
-tool's skills directory (see your tool's docs).
+**Any other tool or local model** — use the single-file build [`dist/AGENTS.md`](dist/AGENTS.md)
+as a rules file or system prompt.
 
-**Anything else (Cursor rules, Copilot instructions, Open WebUI, Ollama, LM Studio, any system prompt)** —
-use the single-file build [`dist/AGENTS.md`](dist/AGENTS.md). For small local models, build a
-trimmed file with only the platforms you need:
-```bash
-python scripts/build_agents_md.py --only fortigate,cisco-ios --out my-network-prompt.md
-```
+Per-agent paths, native install commands, verification and troubleshooting:
+**[INSTALL.md](INSTALL.md)**.
 
 ## Example prompts
 
@@ -102,10 +101,12 @@ python scripts/build_agents_md.py --only fortigate,cisco-ios --out my-network-pr
 ## Repository layout
 
 ```
-network-config/        ← the skill (copy this folder)
+skills/network-config/        ← the skill (copy this folder)
 ├── SKILL.md                  core workflow, safety rules, vendor detection, concept map
 ├── references/               one file per platform + audit and migration guides
 └── evals/                    test cases (prompt.md, case.yaml, graders/)
+INSTALL.md                    installation guide for every agent
+install.ps1 / install.sh      one-line installers
 dist/AGENTS.md                single-file build for non-skill tools (generated)
 scripts/validate.py           structure / link / paste-safety checks (run in CI)
 scripts/build_agents_md.py    builds dist/AGENTS.md
@@ -113,11 +114,11 @@ scripts/build_agents_md.py    builds dist/AGENTS.md
 
 ## Running the evaluations
 
-Each case under `network-config/evals/` contains the user prompt and one grader file per
+Each case under `skills/network-config/evals/` contains the user prompt and one grader file per
 check. With Claude Code ≥ 2.1.269 you can run them with and without the skill:
 
 ```bash
-cd network-config
+cd skills/network-config
 claude plugin eval . --allow-tools Write,Edit,Bash
 ```
 

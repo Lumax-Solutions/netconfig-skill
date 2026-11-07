@@ -11,7 +11,7 @@ Corrections from people who run this gear every day are the most valuable contri
 3. **Paste-safe examples.** Command blocks must paste cleanly: no trailing `!`/`#` comments on
    command lines, placeholders as `<PSK>` / `<PASSWORD>`, example IPs from RFC 5737
    (`192.0.2.0/24`, `198.51.100.0/24`, `203.0.113.0/24`) and RFC 1918.
-4. **Keep the core small.** Vendor syntax goes in `network-config/references/<platform>.md`.
+4. **Keep the core small.** Vendor syntax goes in `skills/network-config/references/<platform>.md`.
    `SKILL.md` only holds rules that apply to every platform. Adding a platform = new reference
    file + one row in the routing table in `SKILL.md`.
 5. **Safety first.** Changes that touch remote management must keep the pre-check → backup →
@@ -25,7 +25,7 @@ python scripts/build_agents_md.py   # regenerate dist/AGENTS.md (CI fails if it'
 ```
 
 Update `CHANGELOG.md` and, for anything substantial, add or update a test case in
-`network-config/evals/` (see the README section on evaluations).
+`skills/network-config/evals/` (see the README section on evaluations).
 
 ## Not accepted
 

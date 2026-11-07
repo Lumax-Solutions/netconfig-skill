@@ -13,7 +13,7 @@ import pathlib
 import re
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-SKILL = ROOT / "network-config"
+SKILL = ROOT / "skills" / "network-config"
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--only", default="", help="comma-separated reference names (without .md)")

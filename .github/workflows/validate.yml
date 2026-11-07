@@ -15,6 +15,10 @@ jobs:
           python-version: "3.12"
       - name: Validate skill structure
         run: python scripts/validate.py
+      - name: Check installer syntax
+        run: |
+          bash -n install.sh
+          pwsh -NoProfile -Command '$t = $null; $e = $null; [void][System.Management.Automation.Language.Parser]::ParseFile("$PWD/install.ps1", [ref]$t, [ref]$e); if ($e) { $e; exit 1 } else { "install.ps1 OK" }'
       - name: Check dist/AGENTS.md is up to date
         run: |
           python scripts/build_agents_md.py

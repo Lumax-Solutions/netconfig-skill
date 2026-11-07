@@ -2,4 +2,4 @@ __pycache__/
 *.pyc
 .DS_Store
 *-workspace/
-network-config/evals/results/
+skills/network-config/evals/results/

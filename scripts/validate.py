@@ -17,7 +17,7 @@ import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-SKILL = ROOT / "network-config"
+SKILL = ROOT / "skills" / "network-config"
 errors: list[str] = []
 
 
