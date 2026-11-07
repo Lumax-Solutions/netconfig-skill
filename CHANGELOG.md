@@ -5,6 +5,12 @@ MAJOR = structure/behaviour change, MINOR = new platform or section, PATCH = cor
 
 ## [1.1.0] — 2026-11-07
 
+### Fixed (from an external review)
+- Unknown OS version on a live device: the skill now asks for the version (and gives the command
+  that shows it) before writing commands, instead of assuming the mainstream release.
+- iptables example now adds the allow rules before `-P INPUT DROP`, with an armed rollback,
+  matching the skill's own lockout-prevention rules.
+
 ### Changed
 - Skill moved to `skills/network-config/`, the standard location that cross-agent installers
   (`npx skills`, Hermes, Gemini CLI) discover automatically.

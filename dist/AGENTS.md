@@ -36,8 +36,13 @@ reference exists; the references contain version-specific corrections that memor
 1. **Identify vendor, platform and OS version.** Syntax differs a lot between versions
    (e.g. FortiOS 6.x vs 7.x, ASA pre/post 8.3 NAT, RouterOS v6 vs v7, PAN-OS
    virtual-router vs logical-router, VyOS 1.3 vs 1.4 firewall). If the user pasted
-   config, detect the vendor from it (table below). If the version is unknown, assume
-   the current mainstream release and say so in one line.
+   config, detect the vendor from it (table below). **If the version is unknown and the
+   commands are for a live / production device, ask for it before writing commands**, and
+   give the one command that shows it (`show version`, `get system status`, `show system info`,
+   `show version` on Junos, `/system resource print`, `display version`). Only if the user
+   can't check or says to go ahead anyway, or the request is a lab, explanation or review:
+   state the version you assumed in one line and mark every version-sensitive command
+   ("7.4.1+ syntax; on 7.2 use …").
 2. **Clarify only what you truly need** (interfaces/zones, IP plan, peers). Otherwise
    use clear placeholders and state assumptions.
 3. **Produce the answer in this structure** for any change request:
@@ -795,6 +800,9 @@ Warn: `purge` deletes every entry in a table; `delete` on an object fails if ref
 
 Same principles (default deny inbound, least privilege, allow established) applied on the host or cloud layer — often in addition to the perimeter firewall.
 
+The admin network `10.0.99.0/24` in these examples is a placeholder: replace it with the address you
+connect from (`echo $SSH_CLIENT` shows it on Linux) or you will lock yourself out.
+
 **UFW (Ubuntu/Debian):**
 ```
 sudo ufw default deny incoming
@@ -830,14 +838,17 @@ Migrating from iptables: `iptables-save > rules.v4` → `iptables-restore-transl
 
 **iptables (legacy):**
 ```
-iptables -P INPUT DROP
 iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 iptables -A INPUT -i lo -j ACCEPT
 iptables -A INPUT -p tcp -s 10.0.99.0/24 --dport 22 -j ACCEPT
 iptables -A INPUT -p tcp -m multiport --dports 80,443 -j ACCEPT
-iptables-save > /etc/iptables/rules.v4     # persist (iptables-persistent)
+iptables -P INPUT DROP
+iptables-save > /etc/iptables/rules.v4
 ```
-(Insert the ACCEPT rules **before** setting policy DROP when working over SSH.)
+The allow rules come first and the DROP policy last, so an SSH session is never cut off mid-paste.
+Over SSH, arm a rollback before pasting: `iptables-save > /root/fw.bak` and
+`(sleep 300 && iptables-restore < /root/fw.bak) &`, then kill that job once a new session works.
+`iptables-save` persists the rules only with `iptables-persistent` / `netfilter-persistent`.
 
 **Windows Defender Firewall (PowerShell):**
 `New-NetFirewallRule -DisplayName "Allow RDP from admin" -Direction Inbound -Protocol TCP -LocalPort 3389 -RemoteAddress 10.0.99.0/24 -Action Allow`; inspect `Get-NetFirewallRule | Where Enabled -eq True`.

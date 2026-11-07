@@ -6,6 +6,9 @@ Part of the `network-config` skill. Read `../SKILL.md` first for the workflow an
 
 Same principles (default deny inbound, least privilege, allow established) applied on the host or cloud layer — often in addition to the perimeter firewall.
 
+The admin network `10.0.99.0/24` in these examples is a placeholder: replace it with the address you
+connect from (`echo $SSH_CLIENT` shows it on Linux) or you will lock yourself out.
+
 **UFW (Ubuntu/Debian):**
 ```
 sudo ufw default deny incoming
@@ -41,14 +44,17 @@ Migrating from iptables: `iptables-save > rules.v4` → `iptables-restore-transl
 
 **iptables (legacy):**
 ```
-iptables -P INPUT DROP
 iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 iptables -A INPUT -i lo -j ACCEPT
 iptables -A INPUT -p tcp -s 10.0.99.0/24 --dport 22 -j ACCEPT
 iptables -A INPUT -p tcp -m multiport --dports 80,443 -j ACCEPT
-iptables-save > /etc/iptables/rules.v4     # persist (iptables-persistent)
+iptables -P INPUT DROP
+iptables-save > /etc/iptables/rules.v4
 ```
-(Insert the ACCEPT rules **before** setting policy DROP when working over SSH.)
+The allow rules come first and the DROP policy last, so an SSH session is never cut off mid-paste.
+Over SSH, arm a rollback before pasting: `iptables-save > /root/fw.bak` and
+`(sleep 300 && iptables-restore < /root/fw.bak) &`, then kill that job once a new session works.
+`iptables-save` persists the rules only with `iptables-persistent` / `netfilter-persistent`.
 
 **Windows Defender Firewall (PowerShell):**
 `New-NetFirewallRule -DisplayName "Allow RDP from admin" -Direction Inbound -Protocol TCP -LocalPort 3389 -RemoteAddress 10.0.99.0/24 -Action Allow`; inspect `Get-NetFirewallRule | Where Enabled -eq True`.
