@@ -1,9 +1,33 @@
 # netconfig-skill
 
+[![Latest release](https://img.shields.io/github/v/release/Lumax-Solutions/netconfig-skill)](https://github.com/Lumax-Solutions/netconfig-skill/releases/latest)
+[![validate](https://github.com/Lumax-Solutions/netconfig-skill/actions/workflows/validate.yml/badge.svg)](https://github.com/Lumax-Solutions/netconfig-skill/actions/workflows/validate.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Agent Skills](https://img.shields.io/badge/format-Agent%20Skills-6f42c1)](https://agentskills.io/)
+
 An **Agent Skill** that turns an AI coding/chat agent into a careful senior network engineer for
-routers, switches and firewalls — it writes paste-ready configs, reviews/audits configs, reads
-`show`/`debug` output, and converts configs between vendors, **with backup, verification and
-rollback steps built in** so you don't lock yourself out of a remote box.
+routers, switches and firewalls. It writes paste-ready configs, **safely changes devices that are
+already running**, reviews and audits configs, reads `show`/`debug` output, and converts configs
+between vendors — with state checks, a minimal diff, an armed rollback and allow/deny tests built
+in, so you don't break production or lock yourself out of a remote box.
+
+> **New in [v1.2.0](https://github.com/Lumax-Solutions/netconfig-skill/releases/tag/v1.2.0):**
+> a change workflow for live devices (collect state → minimal diff → armed rollback → phased apply →
+> allow/deny tests → save last), IPv6/dual-stack guidance, config sanitizing, and coverage labels.
+> Scored 10/10 vs 4/8 for v1.1 on a live-FortiGate change with planted conflicts.
+
+**Install in one line** (into every agent on your computer — details in [INSTALL.md](INSTALL.md)):
+
+```powershell
+irm https://raw.githubusercontent.com/Lumax-Solutions/netconfig-skill/main/install.ps1 | iex   # Windows
+```
+```bash
+curl -fsSL https://raw.githubusercontent.com/Lumax-Solutions/netconfig-skill/main/install.sh | bash   # macOS / Linux
+```
+
+Works with Claude Code, Claude apps, Codex, Antigravity, Gemini CLI, Cursor, GitHub Copilot,
+Windsurf, Cline, Roo, Kiro, OpenCode, Hermes, Goose, Amp and other agents that support
+[Agent Skills](https://agentskills.io/) — or any LLM via [`dist/AGENTS.md`](dist/AGENTS.md).
 
 | Area | Platforms |
 |---|---|
@@ -12,9 +36,9 @@ rollback steps built in** so you don't lock yourself out of a remote box.
 | Routing / switching | Juniper Junos (SRX, MX, EX/QFX), MikroTik RouterOS v7, Huawei VRP, Aruba/HPE AOS-CX, Arista EOS, VyOS/EdgeOS |
 | Host & cloud | UFW, nftables, iptables, Windows Defender Firewall, AWS SG/NACL, Azure NSG, GCP firewall rules, Kubernetes NetworkPolicy |
 
-Topics: interfaces, VLANs/trunks/LACP, static/OSPF/BGP, ACLs and firewall policies, NAT/PAT/VIPs,
-site-to-site IPsec (IKEv2, route-based), SD-WAN, HA, hardening, audits, cross-vendor migration,
-troubleshooting.
+Topics: changes to existing devices, interfaces, VLANs/trunks/LACP, static/OSPF/BGP, ACLs and
+firewall policies, NAT/PAT/VIPs, site-to-site IPsec (IKEv2, route-based), SD-WAN, HA, IPv6 /
+dual-stack, hardening, audits, cross-vendor migration, troubleshooting.
 
 > **Disclaimer.** This skill produces suggestions, not guarantees. Always review generated
 > configuration, test in a lab or maintenance window, keep out-of-band access, and verify
@@ -143,6 +167,17 @@ claude plugin eval . --allow-tools Write,Edit,Bash
 
 These are real, billed model runs. Without Claude Code, run the prompts in any agent with and
 without the skill and grade answers against the `graders/` files by hand.
+
+## Roadmap
+
+- **v1.3: sources.** `SOURCES.md` with a vendor documentation link, applicable versions and the
+  last-checked date for every version-sensitive claim.
+- **Lab-tested scenarios.** Configs validated on virtual appliances with firmware versions and
+  results published next to the model evaluations — open platforms (Linux, VyOS, FRR) first.
+  Lab results from Cisco, FortiGate, Palo Alto or Juniper are very welcome.
+- More IPv6 depth for the Standard platforms.
+
+See [CHANGELOG.md](CHANGELOG.md) and [Releases](https://github.com/Lumax-Solutions/netconfig-skill/releases).
 
 ## Contributing
 
