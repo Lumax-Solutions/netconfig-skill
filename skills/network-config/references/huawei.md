@@ -5,7 +5,7 @@ Part of the `network-config` skill. Read `../SKILL.md` first for the workflow an
 ## Huawei VRP (routers/switches) & USG firewalls
 
 `undo` negates, `display` shows, `quit`/`return` exits. On VRP8 (NE/CE series) two-stage mode needs `commit`;
-`commit trial <seconds>` (VRP8 only, not AR/VRP5) auto-reverts unless confirmed with `commit` (cancel: `abort trial`).
+`commit trial [time]` (VRP8 only, not AR/VRP5; check the time unit with `?`) auto-reverts unless confirmed with `commit` (cancel: `abort trial`).
 `nat server ... global current-interface` is entered in the WAN interface view; SSH also needs `ssh user <name> service-type stelnet`.
 ```
 system-view

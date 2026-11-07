@@ -139,10 +139,10 @@ the SEC/securityk9 licence enables IPsec/ZBFW; without HSEC (`license feature hs
 crypto is capped at 1,000 tunnels / 250 Mbps — check with `show license summary`.
 A Cisco SVTI always uses "any any" (0.0.0.0/0) traffic selectors, so the peer's phase 2
 must use 0.0.0.0/0 too (on FortiGate: src/dst-subnet 0.0.0.0 0.0.0.0) or the tunnel won't come up.
-On a router that already has IKEv2 tunnels, a new `crypto ikev2 policy` without `match` applies to
-every local address and replaces the default (smart-default) policy — existing peers relying on the
-defaults can stop negotiating. Check `show crypto ikev2 policy` first; scope the new policy with
-`match address local <wan-ip>` or reuse the existing one.
+On a router that already has IKEv2 tunnels, a new `crypto ikev2 policy` without `match` matches all
+peers in the global FVRF, so it can change what existing peers negotiate (how it interacts with the
+smart-default policy isn't spelled out in Cisco's docs — test it). Check `show crypto ikev2 policy`
+first; scope the new policy with `match address local <wan-ip>` or reuse the existing one.
 Don't use `?` in a pre-shared key typed or pasted at the CLI (it triggers help and corrupts the key).
 Enabling the security / HSEC licence may need a reload — plan it as a separate maintenance step.
 `copy running-config bootflash:<file>` asks to confirm the destination name — press Enter.
@@ -161,7 +161,7 @@ own management/services (22, 23, 80, 443, 161, 500/4500 if unused) ending in `pe
 **HSRP:** `interface Vlan10` → `standby 10 ip 10.0.10.1` / `standby 10 priority 110` / `standby 10 preempt`.
 
 **Safety & save:** `reload in 10` before risky remote changes, `reload cancel` after;
-`archive` (with `path flash:archive`, recommended — it holds the backup) + `configure replace flash:backup.cfg`;
+`archive` (with `path flash:archive` — **required** for the revert timer) + `configure replace flash:backup.cfg`;
 IOS-XE: `configure terminal revert timer 10` then `configure confirm`. Save: `copy running-config startup-config`.
 
 **Troubleshooting:** `show ip interface brief`, `show interfaces Gi0/0`, `show running-config | section bgp`,

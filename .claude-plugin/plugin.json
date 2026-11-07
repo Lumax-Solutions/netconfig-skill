@@ -1,0 +1,12 @@
+{
+  "name": "netconfig",
+  "version": "1.3.0",
+  "description": "Safe router, switch and firewall changes: state check, minimal diff, armed rollback, allow/deny tests. Cisco, FortiGate, Palo Alto, Juniper, MikroTik and more.",
+  "author": {
+    "name": "Lumax Solutions"
+  },
+  "homepage": "https://github.com/Lumax-Solutions/netconfig-skill",
+  "repository": "https://github.com/Lumax-Solutions/netconfig-skill",
+  "license": "MIT",
+  "keywords": ["networking", "cisco", "fortigate", "firewall", "router", "palo-alto", "juniper", "mikrotik"]
+}

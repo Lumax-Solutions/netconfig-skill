@@ -3,14 +3,40 @@
 All notable changes to this skill. Versions follow [SemVer](https://semver.org/):
 MAJOR = structure/behaviour change, MINOR = new platform or section, PATCH = corrections.
 
-## [Unreleased]
+## [1.3.0] — 2026-11-07
+
+Theme: claims you can trace, and advice proven in a lab.
+
+### Added
+- **`SOURCES.md`:** 53 version-sensitive claims, each with its vendor source, the versions it
+  applies to, status (38 verified, 8 corrected, 7 unverified) and a last-checked date. Every
+  source was re-fetched and checked against the page text.
+- **Freshness check:** `scripts/validate.py` checks `SOURCES.md` rows and warns in CI when a source
+  is over 12 months old.
+- **Linux firewall lab** (`tests/lab/`), run in CI on every push over IPv4 and IPv6:
+  - *SSH-lockdown demo:* the skill's own answer to "restrict SSH to the admin host, keep the website
+    up, don't lock me out", copied verbatim, is applied to a disposable server and tested from
+    separate clients — existing session survives, admin allowed, others blocked, web open, the
+    rollback timer restores access when not confirmed, and the confirmed change persists.
+  - *Reference examples:* the nftables and iptables examples in `host-cloud.md` are loaded and
+    tested the same way.
+- **Claude Code plugin:** `/plugin marketplace add Lumax-Solutions/netconfig-skill` then
+  `/plugin install netconfig@netconfig-skill` (validated with `claude plugin validate`).
+- **"Share a test case" issue template** for real-world cases that become regression tests.
+- `tests/codex/`: the independent Codex test kit (answer-quality and activation harnesses, cases,
+  rubric, results and sample answers).
+- README: the lab demo and a "knows when to stop" FortiGate example up front; independent test results.
+
+### Fixed (from re-checking sources)
+- Cisco: `archive` is **required** (not just recommended) for `configure terminal revert timer`;
+  softened the undocumented claim about IKEv2 policies replacing the smart-default policy.
+- FortiGate: IPv4+IPv6 in one policy since **6.4.0** (not "7.x"); "any" VIP outbound SNAT wording.
+- Palo Alto: PAN-OS 11.1+ Panorama-managed firewalls have Automated Commit Recovery.
+- Huawei `commit trial` and Arista session-confirm details now marked "verify with `?`".
 
 ### Changed
-- Agents now read the platform reference files for troubleshooting too, not only before writing
-  config (an independent activation test showed a VPN troubleshooting request loading only the core).
-- `tests/codex/`: the independent Codex test kit (answer-quality and activation harnesses, cases,
-  rubric, results and sample answers), portable and stripped of local data.
-- README: independent Codex test results (answer quality, `match-vip` retest, 8/8 + 0/4 activation).
+- Agents read the platform reference files for troubleshooting too, not only before writing config
+  (an independent activation test showed a VPN troubleshooting request loading only the core).
 
 ## [1.2.1] — 2026-11-07
 

@@ -1,0 +1,56 @@
+name: Share a test case
+description: Tried the skill on a real task? Share it so it becomes a test (pass or fail).
+labels: [test-case]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks! Please **remove secrets first** (passwords, keys, SNMP communities, public IPs if you
+        prefer) — see `skills/network-config/references/sanitizing-configs.md`. Keep object names
+        and structure so the case still makes sense.
+  - type: input
+    id: platform
+    attributes:
+      label: Platform and exact OS version
+      placeholder: FortiGate 60F, FortiOS 7.4.5
+    validations:
+      required: true
+  - type: input
+    id: agent
+    attributes:
+      label: Agent and skill version
+      placeholder: Claude Code / Codex / Cursor …, netconfig v1.3.0
+  - type: textarea
+    id: start
+    attributes:
+      label: Sanitized starting config (only the relevant parts)
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: request
+    attributes:
+      label: What you asked for (your prompt)
+    validations:
+      required: true
+  - type: textarea
+    id: must-keep
+    attributes:
+      label: One thing that must keep working (and one that must stay blocked, if relevant)
+    validations:
+      required: true
+  - type: dropdown
+    id: outcome
+    attributes:
+      label: How did the answer do?
+      options:
+        - Worked as-is
+        - Worked after small fixes
+        - Wrong or unsafe (please explain below)
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: What was right or wrong
+      description: For a wrong command, include the vendor doc link if you have one.

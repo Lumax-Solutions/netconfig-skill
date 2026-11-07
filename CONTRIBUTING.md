@@ -27,6 +27,15 @@ python scripts/build_agents_md.py   # regenerate dist/AGENTS.md (CI fails if it'
 Update `CHANGELOG.md` and, for anything substantial, add or update a test case in
 `skills/network-config/evals/` (see the README section on evaluations).
 
+## Lab tests and test cases
+
+- Linux firewall labs live in `tests/lab/` and run in CI (`sudo python3 tests/lab/...`). New
+  scenarios that test real traffic are very welcome — FRR and VyOS are next on the list.
+- Tried the skill on a real task? Use the **Share a test case** issue template. Confirmed
+  failures become regression tests in `skills/network-config/evals/`.
+- Changed a version-sensitive claim? Update its row in `SOURCES.md` (source link, versions,
+  status, today's date).
+
 ## Not accepted
 
 Content for bypassing authentication on devices you don't administer, cracking other people's

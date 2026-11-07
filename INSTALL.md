@@ -104,6 +104,7 @@ Steps:
 
 | Agent | Paste this |
 |---|---|
+| **Claude Code** | `/plugin marketplace add Lumax-Solutions/netconfig-skill` then `/plugin install netconfig@netconfig-skill` |
 | **Codex** | `$skill-installer install https://github.com/Lumax-Solutions/netconfig-skill/tree/main/skills/network-config` |
 | **Gemini CLI** | `Run: gemini skills install https://github.com/Lumax-Solutions/netconfig-skill.git --path skills/network-config --scope user --consent` |
 | **Hermes Agent** | `Run: hermes skills install Lumax-Solutions/netconfig-skill/skills/network-config` |
@@ -122,7 +123,7 @@ Steps:
 
 | Agent | User folder | Project folder | Native install |
 |---|---|---|---|
-| **Claude Code** | `~/.claude/skills/` | `.claude/skills/` | Copy the folder (or use option 1) |
+| **Claude Code** | `~/.claude/skills/` | `.claude/skills/` | Plugin: `/plugin marketplace add Lumax-Solutions/netconfig-skill` then `/plugin install netconfig@netconfig-skill` (updates via `/plugin`), or copy the folder |
 | **Claude apps** (claude.ai, Desktop) | — | — | Zip the `network-config` folder → *Customize → Skills → + → Upload a skill* |
 | **OpenAI Codex** (CLI, IDE, app) | `~/.agents/skills/` | `.agents/skills/` | `$skill-installer` prompt (above) |
 | **Google Antigravity** | `~/.gemini/config/skills/` | `.agents/skills/` | Copy the folder |

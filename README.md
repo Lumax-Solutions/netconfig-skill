@@ -11,10 +11,43 @@ already running**, reviews and audits configs, reads `show`/`debug` output, and 
 between vendors — with state checks, a minimal diff, an armed rollback and allow/deny tests built
 in, so you don't break production or lock yourself out of a remote box.
 
-> **New in [v1.2.0](https://github.com/Lumax-Solutions/netconfig-skill/releases/tag/v1.2.0):**
-> a change workflow for live devices (collect state → minimal diff → armed rollback → phased apply →
-> allow/deny tests → save last), IPv6/dual-stack guidance, config sanitizing, and coverage labels.
-> Scored 10/10 vs 4/8 for v1.1 on a live-FortiGate change with planted conflicts.
+## See it work: tighten SSH without locking yourself out
+
+> *"I'm connected over SSH from the admin host 198.51.100.10 (IPv6 2001:db8:100::10). Restrict NEW SSH
+> connections to that admin host only, and keep the public website (TCP 80/443) reachable over IPv4
+> and IPv6 from anywhere. I don't want to lock myself out."* — [full prompt](tests/lab/ssh-lockdown/scenario.md)
+
+The skill's answer ([full text](tests/lab/ssh-lockdown/skill-answer.md)) checks the live state first,
+backs up the running ruleset, arms a rollback timer that reloads the backup in 10 minutes, then
+swaps only the input chain:
+
+```text
+ip saddr 198.51.100.10 tcp dport 22 accept
+ip6 saddr 2001:db8:100::10 tcp dport 22 accept
+tcp dport 22 counter drop
+tcp dport { 80, 443 } accept
+```
+
+Its commands, copied verbatim, are run in a [disposable Linux firewall lab](tests/lab/README.md)
+on every push, from separate client hosts:
+
+| Check (IPv4 and IPv6) | Result |
+|---|---|
+| Existing SSH session survives the change | ✅ |
+| New SSH from the admin host works | ✅ |
+| New SSH from any other host is blocked | ✅ |
+| Website (80/443) still reachable from anywhere | ✅ |
+| Not confirmed → the timer restores the original access | ✅ |
+| Confirmed → the restriction stays, also after reloading the saved config | ✅ |
+
+**And it knows when to stop.** Asked to publish a FortiGate server on a public IP and port that an
+existing VIP already uses, it doesn't overwrite it: it flags the conflict, preserves the existing
+service and the existing `WEB-02` object, checks `match-vip` on the deny rule above, and asks for a
+decision before changing anything ([sample answer](tests/codex/sample-outputs/v1.2.1/with-skill.md)).
+
+> **New in v1.3.0:** the lab above, [`SOURCES.md`](SOURCES.md) (53 version-sensitive claims with
+> vendor links and check dates), Claude Code plugin install, and corrections from re-checking every
+> source. **v1.2:** the change workflow for live devices.
 
 **Install in one line** (into every agent on your computer — details in [INSTALL.md](INSTALL.md)):
 
@@ -141,6 +174,12 @@ and the agent installs the skill itself.
 **Claude apps (claude.ai / Desktop)** — zip `skills/network-config` and upload it under
 *Customize → Skills*.
 
+**Claude Code (plugin)** — in a session:
+```
+/plugin marketplace add Lumax-Solutions/netconfig-skill
+/plugin install netconfig@netconfig-skill
+```
+
 **Any other tool or local model** — use the single-file build [`dist/AGENTS.md`](dist/AGENTS.md)
 as a rules file or system prompt.
 
@@ -164,6 +203,10 @@ skills/network-config/        ← the skill (copy this folder)
 ├── references/               one file per platform + change workflow, IPv6, sanitizing, audit, migration
 └── evals/                    test cases (prompt.md, case.yaml, graders/)
 INSTALL.md                    installation guide for every agent
+SOURCES.md                    vendor source, versions and last-checked date for each sensitive claim
+.claude-plugin/               Claude Code plugin + marketplace manifests
+tests/lab/                    disposable Linux firewall labs (run in CI)
+tests/codex/                  independent Codex test kit
 install.ps1 / install.sh      one-line installers
 dist/AGENTS.md                single-file build for non-skill tools (generated)
 scripts/validate.py           structure / link / paste-safety checks (run in CI)
@@ -185,11 +228,11 @@ without the skill and grade answers against the `graders/` files by hand.
 
 ## Roadmap
 
-- **v1.3: sources.** `SOURCES.md` with a vendor documentation link, applicable versions and the
-  last-checked date for every version-sensitive claim.
-- **Lab-tested scenarios.** Configs validated on virtual appliances with firmware versions and
-  results published next to the model evaluations — open platforms (Linux, VyOS, FRR) first.
-  Lab results from Cisco, FortiGate, Palo Alto or Juniper are very welcome.
+- **More labs:** FRR (BGP/OSPF) and VyOS scenarios in the same CI lab; MikroTik CHR if feasible.
+- **Commercial-vendor lab results** (Cisco, FortiGate, Palo Alto, Juniper) from people with labs —
+  use `tests/lab/ssh-lockdown/lab.py`'s pattern or the [test-case template](https://github.com/Lumax-Solutions/netconfig-skill/issues/new/choose).
+- Re-confirm the 7 `UNVERIFIED` claims in [SOURCES.md](SOURCES.md) (mostly Juniper pages that
+  block automated checks).
 - More IPv6 depth for the Standard platforms.
 
 See [CHANGELOG.md](CHANGELOG.md) and [Releases](https://github.com/Lumax-Solutions/netconfig-skill/releases).
@@ -199,6 +242,10 @@ See [CHANGELOG.md](CHANGELOG.md) and [Releases](https://github.com/Lumax-Solutio
 Corrections from people running this gear are very welcome — please include the OS version and a
 vendor doc link. See [CONTRIBUTING.md](CONTRIBUTING.md). Report wrong commands with the
 "Wrong or outdated command" issue template.
+
+**Try it on a real task and share it:** the "Share a test case" issue template asks for the
+platform/version, a sanitized starting config, the change you asked for, and one thing that must
+keep working. Confirmed failures become regression tests.
 
 ## License
 

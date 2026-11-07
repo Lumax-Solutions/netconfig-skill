@@ -78,10 +78,9 @@ config firewall address6
     next
 end
 ```
-Policies: in FortiOS 7.x one `config firewall policy` entry can carry both families
-(`set srcaddr6` / `set dstaddr6` alongside `set srcaddr` / `set dstaddr`); older releases use a
-separate `config firewall policy6` — check which the box uses with `show firewall policy` before
-adding rules. Management: `set ip6-allowaccess` per interface is independent of IPv4 `allowaccess`,
+Policies: since FortiOS 6.4.0 one `config firewall policy` entry carries both families
+(`set srcaddr6` / `set dstaddr6` alongside `set srcaddr` / `set dstaddr`); 6.2 and older use a
+separate `config firewall policy6`. Management: `set ip6-allowaccess` per interface is independent of IPv4 `allowaccess`,
 and admin `trusthost` has IPv6 equivalents (`ip6-trusthost1`). Show: `diagnose ipv6 address list`,
 `get router info6 routing-table`, `diagnose sniffer packet any 'ip6' 4 0 l`.
 

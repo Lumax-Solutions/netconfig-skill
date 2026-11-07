@@ -85,9 +85,37 @@ if evals.is_dir():
         if not list((case / "graders").glob("*.md")):
             err(f"evals/{case.name}: no graders")
 
+# SOURCES.md: well-formed rows and freshness (warn when a source is over 12 months old)
+import datetime
+sources = ROOT / "SOURCES.md"
+stats = {}
+if sources.is_file():
+    today = datetime.date.today()
+    for n, line in enumerate(sources.read_text(encoding="utf-8").splitlines(), 1):
+        if not re.match(r"\|\s*[A-Z]\d+\s*\|", line):
+            continue
+        cells = [c.strip() for c in re.split(r"(?<!\\)\|", line.strip().strip("|"))]
+        if len(cells) != 7:
+            err(f"SOURCES.md:{n}: expected 7 columns, found {len(cells)}")
+            continue
+        status = cells[3].split()[0] if cells[3] else ""
+        if status not in ("VERIFIED", "CORRECTED", "UNVERIFIED"):
+            err(f"SOURCES.md:{n}: unknown status {cells[3]!r}")
+        stats[status] = stats.get(status, 0) + 1
+        try:
+            checked = datetime.date.fromisoformat(cells[6])
+        except ValueError:
+            err(f"SOURCES.md:{n}: last-checked date {cells[6]!r} is not YYYY-MM-DD")
+            continue
+        if (today - checked).days > 365:
+            print(f"::warning file=SOURCES.md,line={n}::{cells[0]} last checked {checked} (over 12 months): re-verify the source")
+else:
+    err("SOURCES.md is missing")
+
 if errors:
     print("Validation FAILED:")
     for e in errors:
         print("  -", e)
     sys.exit(1)
-print(f"OK: {name} — {len(present)} reference files, description {len(desc)} chars")
+print(f"OK: {name} — {len(present)} reference files, description {len(desc)} chars, "
+      f"sources: " + ", ".join(f"{v} {k.lower()}" for k, v in sorted(stats.items())))

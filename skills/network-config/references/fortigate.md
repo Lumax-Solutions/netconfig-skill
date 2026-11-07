@@ -110,8 +110,8 @@ The port-forward VIP above is used as dstaddr in the WAN→LAN policy.
 - A **port-forward VIP** only DNATs; outbound from the server uses the policy's NAT (interface IP or IP pool).
 - **Hairpin** (internal users reaching the server by its public IP): set the VIP `extintf "any"`
   (or create a second VIP for the internal interface) and add an internal→server-interface policy
-  with the VIP as dstaddr. A port2→port1 policy with the VIP will *not* match. Caveat: an `any` VIP
-  also SNATs the server's outbound traffic to extip on **every** interface — limit it with
+  with the VIP as dstaddr. A port2→port1 policy with the VIP will *not* match. Caveat: with NAT enabled on
+  the egress policy, an `any` VIP can SNAT the server's outbound traffic to extip on all interfaces — limit it with
   `set srcintf-filter "port1" "port2"` (CLI only) or prefer a specific extintf.
 - Inbound policies reference the VIP (not the real IP) as dstaddr; don't also enable NAT on them
   unless you intend to hide the client IP.

@@ -1,0 +1,15 @@
+{
+  "name": "netconfig-skill",
+  "owner": {
+    "name": "Lumax Solutions",
+    "url": "https://github.com/Lumax-Solutions"
+  },
+  "description": "Safe, multi-vendor router, switch and firewall configuration for AI agents",
+  "plugins": [
+    {
+      "name": "netconfig",
+      "source": "./",
+      "description": "Safe router, switch and firewall changes: state check, minimal diff, armed rollback, allow/deny tests. Cisco, FortiGate, Palo Alto, Juniper, MikroTik and more."
+    }
+  ]
+}
