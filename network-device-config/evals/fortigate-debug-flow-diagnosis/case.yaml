@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: fortigate-debug-flow-diagnosis
+expected_outcome: |
+  Correctly reads that DNAT worked and routing found the internal interface, and that the packet hit the implicit deny (policy 0); Identifies that the policy dstaddr must be the VIP object (NAS-8443), not the real address object NAS-LAN; Identifies that the policy service must match the mapped (post-DNAT) port 443 / HTTPS, not 8443 (or explains the service must match the translated port); Gives the exact FortiOS CLI to fix the policy (set dstaddr "NAS-8443", set service "HTTPS"); Gives commands to re-verify (debug flow again showing an allowed policy id, and/or session list/sniffer); Mentions to disable debugging afterward (diagnose debug disable/reset)

@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: mikrotik-vlan-guest
+expected_outcome: |
+  Uses bridge VLAN filtering (/interface bridge vlan entries with tagged/untagged ports and pvid on access ports); Enables vlan-filtering=yes as the last step or explicitly warns that doing it early can cut access; Warns that the user's current winbox session on ether5 (which becomes a trunk) will be affected, and gives a safe approach (Safe Mode, a management port/VLAN, or moving to another port); Creates VLAN interfaces on the bridge with 10.10.10.1/24 and 10.20.20.1/24 plus DHCP servers/pools for both; Includes srcnat masquerade out the WAN and a default-drop input chain from WAN; Blocks guest VLAN from reaching the staff VLAN in the forward chain; Blocks guest VLAN from router management services (input chain) while still allowing DNS/DHCP to the router

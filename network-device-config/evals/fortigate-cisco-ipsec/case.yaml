@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: fortigate-cisco-ipsec
+expected_outcome: |
+  Complete, matching IKEv2 route-based configs for both sides (phase1/phase2-interface, routes incl. blackhole, two policies without NAT on FortiGate; IKEv2 proposal/policy/keyring/profile, IPsec profile, VTI tunnel, route, and NAT exemption for VPN traffic on Cisco), matching crypto, verification commands for both, and remote-safety advice (reload in / revert timer).

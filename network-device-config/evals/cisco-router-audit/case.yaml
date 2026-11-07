@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: cisco-router-audit
+expected_outcome: |
+  A severity-ranked findings table identifying at least: plain-text enable password, plaintext user password, http server, SNMP public/private RW, RDP exposed to internet via static NAT, NAT ACL permit any, IKEv1 with 3DES/MD5/DH2, weak wildcard PSK, telnet on VTY with line password and no access-class, no WAN ACL, no logging/NTP; with exact remediation commands and safe-change advice.

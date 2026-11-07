@@ -1,0 +1,41 @@
+name: Wrong or outdated command
+description: Report a command, syntax or behaviour in the skill that is incorrect for a platform/version
+labels: [correction]
+body:
+  - type: input
+    id: file
+    attributes:
+      label: File
+      description: Which file contains the error?
+      placeholder: network-device-config/references/fortigate.md
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Platform and exact OS version
+      placeholder: FortiGate 100F, FortiOS 7.4.5
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: What the skill says
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: correct
+    attributes:
+      label: What is correct
+      description: The correct syntax or behaviour, ideally with device output.
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Vendor documentation link
+      description: Official doc, release notes or KB article that confirms the correction.
+    validations:
+      required: true

@@ -1,0 +1,24 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate skill structure
+        run: python scripts/validate.py
+      - name: Check dist/AGENTS.md is up to date
+        run: |
+          python scripts/build_agents_md.py
+          git diff --exit-code dist/AGENTS.md || {
+            echo "::error::dist/AGENTS.md is stale. Run: python scripts/build_agents_md.py and commit the result."
+            exit 1
+          }

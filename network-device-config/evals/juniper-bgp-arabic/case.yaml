@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: juniper-bgp-arabic
+expected_outcome: |
+  Responds in Arabic (explanations in Arabic; commands in Junos syntax); Allows BGP in host-inbound-traffic for the untrust zone/interface (protocols bgp); Defines an export policy that advertises only 198.51.100.0/24 and rejects everything else; Defines an import policy that accepts only 0.0.0.0/0 exact and rejects the rest; Ensures 198.51.100.0/24 exists in the routing table for export (e.g. a discard/reject static route or aggregate); Sets routing-options autonomous-system 65010 and a bgp group with type external, peer-as 64500, neighbor 203.0.113.1; Uses commit check and commit confirmed for the remote change; Gives verification commands (show bgp summary, show route advertising-protocol bgp 203.0.113.1, show route receive-protocol bgp 203.0.113.1)
