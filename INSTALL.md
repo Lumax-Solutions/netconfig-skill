@@ -10,6 +10,9 @@ Pick **one** of the three ways below.
 | [2. Paste a prompt into your agent](#2-paste-a-prompt-into-your-agent) | Letting the agent install itself, from inside its own chat | Copy, paste, approve |
 | [3. Per-agent instructions](#3-per-agent-instructions) | One specific agent, or a native install command | One command or a few clicks |
 
+No AI agent at all? The **[NetConfig Assistant desktop app](app/README.md)** needs no install:
+download the ZIP, open `app/` and double-click the start file.
+
 After installing, **restart the agent** (or start a new chat) and check it with
 [Verify it works](#verify-it-works).
 

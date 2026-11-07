@@ -3,6 +3,21 @@
 All notable changes to this skill. Versions follow [SemVer](https://semver.org/):
 MAJOR = structure/behaviour change, MINOR = new platform or section, PATCH = corrections.
 
+## [Unreleased]
+
+### Added
+- **NetConfig Assistant** (`app/`): a guided desktop app for people new to networking. A local
+  web UI (Python standard library only, no install) with a three-step wizard (device → task →
+  details), streamed answers with Copy buttons, follow-up chat and Markdown export.
+  - AI: any OpenAI-compatible server (llama.cpp/llama-swap, Ollama, LM Studio, vLLM, OpenAI,
+    DeepInfra …) or the Anthropic API; detects local servers automatically.
+  - Sends the core skill plus only the matching reference files, so local models without tool use
+    get the right material; guesses the vendor from a pasted config when the user picks "Not sure".
+  - Removes passwords, keys and SNMP communities from pasted configs on the user's computer (with a
+    report of what was removed); optional public-IP masking.
+  - Advice only: never connects to devices. Listens on 127.0.0.1 and refuses other origins.
+  - `app/test_app.py` (27 offline checks) runs in CI.
+
 ## [1.3.0] — 2026-11-07
 
 Theme: claims you can trace, and advice proven in a lab.

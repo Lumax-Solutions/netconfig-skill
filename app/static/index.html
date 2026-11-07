@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NetConfig Assistant</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><img src="icon.svg" alt="" width="28" height="28"><span>NetConfig Assistant</span></div>
+  <div class="top-actions">
+    <span id="ai-status" class="pill" title="AI connection">Checking AI…</span>
+    <button id="btn-theme" class="ghost" title="Light / dark" aria-label="Switch light / dark">🌓</button>
+    <button id="btn-settings" class="ghost">⚙ Settings</button>
+  </div>
+</header>
+
+<main>
+  <div id="setup-banner" class="banner warn" hidden></div>
+
+  <!-- Wizard -->
+  <section id="wizard">
+    <ol class="steps">
+      <li data-step="1" class="active">1 · Device</li>
+      <li data-step="2">2 · What to do</li>
+      <li data-step="3">3 · Details</li>
+    </ol>
+
+    <div class="step" id="step-1">
+      <h1>What kind of device is it?</h1>
+      <p class="lead">Pick the brand. If you're not sure, choose <b>Not sure</b> and paste its configuration later.</p>
+      <div id="vendor-grid" class="grid"></div>
+      <label class="inline-check"><input type="checkbox" id="second-vendor-toggle"> It talks to a second device of another brand (for example a VPN between two sites)</label>
+      <div id="vendor2-wrap" hidden>
+        <p class="lead small">Second device:</p>
+        <div id="vendor-grid-2" class="grid compact"></div>
+      </div>
+    </div>
+
+    <div class="step" id="step-2" hidden>
+      <h1>What do you want to do?</h1>
+      <div id="task-grid" class="grid tasks"></div>
+      <div class="nav"><button class="ghost" data-back="1">← Back</button></div>
+    </div>
+
+    <div class="step" id="step-3" hidden>
+      <h1>Tell me about it</h1>
+      <p class="lead" id="step3-summary"></p>
+
+      <label class="field">
+        <span>Describe what you need, in your own words</span>
+        <textarea id="request" rows="4" dir="auto" placeholder="For example: allow my web server 192.168.1.20 to be reached from the internet on HTTPS only"></textarea>
+      </label>
+      <div class="chips" id="examples"></div>
+
+      <div id="live-block">
+        <div class="row">
+          <div class="field">
+            <span>Is the device already working on a real network?</span>
+            <div class="seg" id="live">
+              <button data-v="yes">Yes, it's live</button>
+              <button data-v="no">No, new or a lab</button>
+              <button data-v="unsure">Not sure</button>
+            </div>
+          </div>
+          <div class="field">
+            <span>How will you connect to it while you make the change?</span>
+            <div class="seg" id="conn">
+              <button data-v="console">Cable / console</button>
+              <button data-v="remote">Remotely (SSH / web)</button>
+              <button data-v="unsure">Not sure</button>
+            </div>
+          </div>
+        </div>
+        <label class="field">
+          <span>Software version <em class="muted">(optional, but it helps a lot)</em></span>
+          <input id="version" type="text" dir="auto" placeholder="for example 7.4.3">
+          <small class="muted" id="version-hint"></small>
+        </label>
+      </div>
+
+      <label class="inline-check"><input type="checkbox" id="ipv6"> The network uses IPv6 too</label>
+
+      <details class="paste" id="paste-box">
+        <summary>Paste the device's current configuration <em class="muted">(optional, recommended for changes and reviews)</em></summary>
+        <p class="small muted">Passwords, keys and community strings are removed on this computer before anything is sent to the AI. You'll see exactly what was removed.</p>
+        <textarea id="config" rows="10" spellcheck="false" placeholder="Paste here (show running-config, show full-configuration, export, …)"></textarea>
+        <label class="inline-check small"><input type="checkbox" id="mask-ips"> Also replace public IP addresses with example addresses</label>
+        <div id="redact-report" class="redact" hidden></div>
+      </details>
+
+      <div class="nav">
+        <button class="ghost" data-back="2">← Back</button>
+        <button id="btn-ask" class="primary big">Get my answer →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Conversation -->
+  <section id="chat" hidden>
+    <div class="banner safe">
+      <b>Advice only.</b> This app never connects to your devices. Read each step, paste commands yourself,
+      and keep a way back in (console cable, or the rollback timer the answer sets up) before changing a live device.
+    </div>
+    <div class="chat-tools">
+      <span id="chat-context" class="muted small"></span>
+      <span class="spacer"></span>
+      <button class="ghost" id="btn-export">⬇ Save as file</button>
+      <button class="ghost" id="btn-new">＋ New request</button>
+    </div>
+    <div id="messages"></div>
+    <form id="followup" class="followup">
+      <textarea id="followup-text" rows="2" dir="auto" placeholder="Ask a follow-up, or paste the output of a command the answer asked you to run…"></textarea>
+      <div class="followup-actions">
+        <button type="button" class="ghost small" id="btn-redact-followup" title="Remove secrets from what you pasted">🛡 Remove secrets</button>
+        <button type="button" class="ghost" id="btn-stop" hidden>■ Stop</button>
+        <button type="submit" class="primary" id="btn-send">Send</button>
+      </div>
+    </form>
+  </section>
+</main>
+
+<!-- Settings -->
+<dialog id="settings">
+  <form method="dialog" id="settings-form">
+    <h2>AI settings</h2>
+    <p class="small muted">Use an AI model on this computer (private, free) or a cloud service (needs an API key).</p>
+    <div id="detected" class="detected"></div>
+    <label class="field"><span>AI service</span><select id="s-preset"></select></label>
+    <label class="field"><span>Server address</span><input id="s-base" type="url" placeholder="http://127.0.0.1:8080/v1"></label>
+    <label class="field" id="s-key-wrap"><span>API key</span>
+      <input id="s-key" type="password" autocomplete="off" placeholder="paste your key">
+      <small class="muted">Saved on this computer only, in your user settings folder (not encrypted).</small>
+    </label>
+    <label class="field"><span>Model</span>
+      <div class="row tight"><select id="s-model"></select><button type="button" class="ghost" id="s-refresh">↻ Load models</button></div>
+      <input id="s-model-manual" type="text" placeholder="or type a model name">
+    </label>
+    <details><summary class="small">Advanced</summary>
+      <div class="row">
+        <label class="field"><span>Creativity (temperature)</span><input id="s-temp" type="number" min="0" max="1" step="0.1"></label>
+        <label class="field"><span>Max answer length (tokens)</span><input id="s-max" type="number" min="512" max="64000" step="512"></label>
+      </div>
+    </details>
+    <div id="s-result" class="small"></div>
+    <div class="nav">
+      <button type="button" class="ghost" id="s-test">Test connection</button>
+      <span class="spacer"></span>
+      <button value="cancel" class="ghost">Cancel</button>
+      <button type="button" class="primary" id="s-save">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<footer class="foot muted small"><span id="versions"></span> · <a href="https://github.com/Lumax-Solutions/netconfig-skill" target="_blank" rel="noopener">netconfig-skill on GitHub</a></footer>
+
+<script src="vendor/marked.umd.js"></script>
+<script src="vendor/purify.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -11,6 +11,11 @@ already running**, reviews and audits configs, reads `show`/`debug` output, and 
 between vendors — with state checks, a minimal diff, an armed rollback and allow/deny tests built
 in, so you don't break production or lock yourself out of a remote box.
 
+> **Not a developer?** Use the **[NetConfig Assistant desktop app](app/README.md)**: pick your
+> device, say what you want, and get step-by-step commands with Copy buttons. It runs on your own
+> computer with a local AI model (or Claude/OpenAI) and removes passwords from pasted configs
+> before sending. Download the ZIP, open `app/`, double-click `start-windows.bat`.
+
 ## See it work: tighten SSH without locking yourself out
 
 > *"I'm connected over SSH from the admin host 198.51.100.10 (IPv6 2001:db8:100::10). Restrict NEW SSH
@@ -181,6 +186,9 @@ and the agent installs the skill itself.
 /plugin install netconfig@netconfig-skill
 ```
 
+**No agent? Use the desktop app** — [`app/`](app/README.md): a guided web app on your own computer
+for people new to networking, with local or cloud AI.
+
 **Any other tool or local model** — use the single-file build [`dist/AGENTS.md`](dist/AGENTS.md)
 as a rules file or system prompt.
 
@@ -208,6 +216,7 @@ SOURCES.md                    vendor source, versions and last-checked date for 
 .claude-plugin/               Claude Code plugin + marketplace manifests
 tests/lab/                    disposable Linux firewall labs (run in CI)
 tests/codex/                  independent Codex test kit
+app/                          NetConfig Assistant: guided desktop app (local web UI, any AI backend)
 install.ps1 / install.sh      one-line installers
 dist/AGENTS.md                single-file build for non-skill tools (generated)
 scripts/validate.py           structure / link / paste-safety checks (run in CI)
