@@ -3,7 +3,10 @@
 All notable changes to this skill. Versions follow [SemVer](https://semver.org/):
 MAJOR = structure/behaviour change, MINOR = new platform or section, PATCH = corrections.
 
-## [Unreleased]
+## [1.4.0] — 2026-11-08
+
+Theme: a desktop app for people who don't use AI agents. The skill's own content is unchanged from
+1.3.0; the version moves with the release.
 
 ### Added
 - **NetConfig Assistant** (`app/`): a guided desktop app for people new to networking. A local
