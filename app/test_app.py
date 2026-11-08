@@ -48,6 +48,11 @@ for keep in ["hostname R1", "/ppp secret add name=x", "chain=input action=accept
     check(f"sanitize keeps '{keep}'", keep in clean)
 check("public IP mapped to documentation range", "8.8.4.4" not in clean and "203.0.113." in clean)
 check("findings reported", len(found) >= 8)
+more, _ = sanitize('ntp authentication-key 1 md5 NtpKey123\n<entry name="a"><phash>$1$abcdefgh$Q1w2E3r4</phash></entry>\n'
+                   'ip ospf message-digest-key 1 md5 OspfKey9')
+check("NTP key removed (not the word md5)", "NtpKey123" not in more and "md5 <REDACTED" in more)
+check("Palo Alto phash removed, XML kept", "Q1w2E3r4" not in more and "</phash></entry>" in more)
+check("OSPF MD5 key removed", "OspfKey9" not in more)
 same, _ = sanitize("snmp-server community abc RO\nsnmp-server community abc RW")
 check("same secret -> same token", same.count("<REDACTED-1>") == 2)
 

@@ -26,11 +26,11 @@ _RULES = [
     ("key-string", re.compile(r"\bkey-string\s+(?:[0-9]+\s+)?(?P<v>\S+)")),
     ("TACACS/RADIUS key", re.compile(r"\b(?:tacacs-server|radius-server)\s+(?:host\s+\S+\s+)?key\s+(?:[0-9]+\s+)?(?P<v>\S+)")),
     ("server key", re.compile(r"^\s+key\s+(?:[0-9]+\s+)?(?P<v>\S+)\s*$", re.M)),
-    ("routing protocol key", re.compile(r"\b(?:message-digest-key\s+\d+\s+md5|authentication-key|neighbor\s+\S+\s+password)\s+(?:[0-9]+\s+)?(?P<v>\S+)")),
+    ("routing protocol key", re.compile(r"\b(?:message-digest-key\s+\d+\s+md5|authentication-key|neighbor\s+\S+\s+password)\s+(?:[0-9]+\s+)?(?:md5\s+|sha\S*\s+)?(?:[0-9]\s+)?(?P<v>\S+)")),
     ("NTP key", re.compile(r"\bntp\s+authentication-key\s+\d+\s+md5\s+(?P<v>\S+)")),
     # Juniper
-    ("Juniper $9$ secret (reversible)", re.compile(r"\"?(?P<v>\$9\$[^\s\";]+)\"?")),
-    ("password hash", re.compile(r"\"?(?P<v>\$[156]\$[^\s\";]+)\"?")),
+    ("Juniper $9$ secret (reversible)", re.compile(r"\"?(?P<v>\$9\$[^\s\";<]+)\"?")),
+    ("password hash", re.compile(r"\"?(?P<v>\$[156]\$[^\s\";<]+)\"?")),
     ("Juniper secret", re.compile(r"\b(?:encrypted-password|secret|ascii-text|community)\s+\"(?P<v>[^\"]+)\"")),
     # Palo Alto (XML)
     ("Palo Alto secret", re.compile(r"<(phash|key|pre-shared-key|private-key|password|community)>(?P<v>[^<]+)</\1>")),

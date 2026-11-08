@@ -16,7 +16,7 @@ MAJOR = structure/behaviour change, MINOR = new platform or section, PATCH = cor
   - Removes passwords, keys and SNMP communities from pasted configs on the user's computer (with a
     report of what was removed); optional public-IP masking.
   - Advice only: never connects to devices. Listens on 127.0.0.1 and refuses other origins.
-  - `app/test_app.py` (28 offline checks) runs in CI.
+  - `app/test_app.py` (31 offline checks) runs in CI.
   - User guide with screenshots (`app/README.md`): install, AI setup, each step, reading the
     answer, privacy, troubleshooting, FAQ.
   - Works with models that reject optional settings: drops `temperature` (newer Claude models)
