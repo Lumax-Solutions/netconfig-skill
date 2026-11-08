@@ -24,6 +24,12 @@ test, and only then save.
 | **Languages** | answers come back in the language you write in (English, Arabic, …) |
 | **Needs** | Windows, macOS or Linux, and Python 3.9 or newer. Nothing else to install |
 
+> **Suggestions only, no warranty.** The app gives advice written by an AI. It can be wrong.
+> Review every command, test in a lab or a quiet maintenance window when you can, keep a way back
+> in (console access or the rollback timer the answer sets up), and check version-specific syntax
+> on your device. You are responsible for changes you make to your equipment.
+> See [Disclaimer](#disclaimer).
+
 **Contents:**
 [1. Install and start](#1-install-and-start) ·
 [2. Connect an AI](#2-connect-an-ai-one-time) ·
@@ -33,6 +39,7 @@ test, and only then save.
 [Privacy](#privacy-what-leaves-your-computer) ·
 [Troubleshooting](#troubleshooting) ·
 [FAQ](#faq) ·
+[Disclaimer](#disclaimer) ·
 [For developers](#for-developers)
 
 ---
@@ -259,6 +266,21 @@ give the most reliable results; on your own computer, use the largest model your
 **Where do I report a wrong command?** Open an issue with the
 [wrong-command form](https://github.com/Lumax-Solutions/netconfig-skill/issues/new/choose).
 Please remove passwords and public addresses first.
+
+---
+
+## Disclaimer
+
+NetConfig Assistant and the network-config skill are a free, community project provided **as is,
+without warranty of any kind** (MIT licence, see [LICENSE](../LICENSE)). Answers are produced by
+an AI model you choose and may be incomplete or wrong for your device, version or network. The
+authors are not responsible for outages, security problems, data loss or other damage resulting
+from using them. Use your own judgement, follow your organisation's change process, and ask a
+qualified engineer for critical systems.
+
+Vendor and product names are trademarks of their respective owners and are used only to describe
+which devices the app supports; this project is not affiliated with or endorsed by any vendor.
+Issues and questions are handled on a best-effort basis, with no support or response time promised.
 
 ---
 

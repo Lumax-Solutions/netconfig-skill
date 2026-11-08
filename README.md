@@ -80,7 +80,9 @@ dual-stack, hardening, audits, cross-vendor migration, troubleshooting.
 > configuration, test in a lab or maintenance window, keep out-of-band access, and verify
 > version-specific syntax on your device (`?` / tab completion). You are responsible for changes
 > made to your equipment. Vendor and product names are trademarks of their respective owners;
-> this project is not affiliated with or endorsed by any vendor.
+> this project is not affiliated with or endorsed by any vendor. This is a free, community project
+> provided as is (see [LICENSE](LICENSE)); issues are handled on a best-effort basis, with no
+> support or response time promised.
 
 ---
 
