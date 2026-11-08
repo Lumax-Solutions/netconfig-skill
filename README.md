@@ -89,13 +89,15 @@ dual-stack, hardening, audits, cross-vendor migration, troubleshooting.
 **NetConfig Assistant** puts the skill behind a simple, guided app that runs on your own computer.
 No agent or coding tool needed.
 
-![NetConfig Assistant: a FortiGate change explained step by step](app/docs/07-answer.jpg)
+![NetConfig Assistant main page: pick your device brand](app/docs/00-main.jpg)
 
 1. **Choose the device** (or *Not sure*), **choose the task** (set up, change a live device, fix,
    review, migrate, ask), and **describe it** in your own words, in any language.
 2. Get a plain-language answer: what will change, the checks it made, numbered steps with a
    **Copy** button on each command, tests (what should work *and* stay blocked), and how to undo it.
 3. Ask follow-ups or paste command output; save the conversation as a file.
+
+![An answer: plain-language summary, the checks made, and commands with Copy buttons](app/docs/07-answer.jpg)
 
 - **Your AI, your choice:** a model on your computer (llama.cpp, Ollama, LM Studio: private and
   free) or Claude, OpenAI and other services.

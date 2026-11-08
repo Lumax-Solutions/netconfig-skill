@@ -8,6 +8,8 @@ It is built on the [network-config skill](../skills/network-config/SKILL.md), so
 follows the same safety rules a senior engineer would: check first, back up, keep a way back in,
 test, and only then save.
 
+![The main page: choose your device brand, then what you want to do](docs/00-main.jpg)
+
 ![The answer screen: a plain-language summary, the checks the AI made, and the first commands](docs/07-answer.jpg)
 
 **At a glance**
