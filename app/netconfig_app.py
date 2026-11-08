@@ -200,6 +200,39 @@ def _request(url, headers=None, body=None, timeout=20):
     return urllib.request.urlopen(req, timeout=timeout)
 
 
+class APIError(Exception):
+    def __init__(self, code, detail):
+        super().__init__(f"HTTP {code}: {detail}")
+        self.code, self.detail = code, detail
+
+
+def _post_adaptive(url, headers, body, timeout):
+    """POST, and if the model rejects an optional parameter (newer models refuse `temperature`,
+    OpenAI reasoning models want `max_completion_tokens`), drop or rename it and retry."""
+    body = dict(body)
+    for _ in range(4):
+        try:
+            return _request(url, headers, body, timeout=timeout)
+        except urllib.error.HTTPError as e:
+            detail = ""
+            try:
+                detail = e.read().decode("utf-8", "replace")
+            except Exception:
+                pass
+            low = detail.lower()
+            if e.code == 400 and "temperature" in low and "temperature" in body:
+                body.pop("temperature")
+                continue
+            if e.code == 400 and "max_completion_tokens" in low and "max_tokens" in body:
+                body["max_completion_tokens"] = body.pop("max_tokens")
+                continue
+            if e.code == 400 and "top_p" in low and "top_p" in body:
+                body.pop("top_p")
+                continue
+            raise APIError(e.code, detail[:400])
+    raise APIError(400, "the AI service rejected the request settings")
+
+
 def auth_headers(s):
     if kind_of(s) == "anthropic":
         return {"x-api-key": s.get("api_key", ""), "anthropic-version": "2023-06-01"}
@@ -231,7 +264,7 @@ def stream_chat(s, system, messages, emit):
     if kind_of(s) == "anthropic":
         body = {"model": s["model"], "system": system, "messages": messages, "stream": True,
                 "max_tokens": int(s.get("max_tokens") or 8192), "temperature": float(s.get("temperature", 0.2))}
-        r = _request(f"{base}/messages", auth_headers(s), body, timeout=300)
+        r = _post_adaptive(f"{base}/messages", auth_headers(s), body, timeout=300)
         for raw in r:
             line = raw.decode("utf-8", "replace").strip()
             if not line.startswith("data:"):
@@ -249,7 +282,7 @@ def stream_chat(s, system, messages, emit):
     body = {"model": s["model"] or "default", "stream": True, "temperature": float(s.get("temperature", 0.2)),
             "max_tokens": int(s.get("max_tokens") or 8192),
             "messages": [{"role": "system", "content": system}] + messages}
-    r = _request(f"{base}/chat/completions", auth_headers(s), body, timeout=600)
+    r = _post_adaptive(f"{base}/chat/completions", auth_headers(s), body, timeout=600)
     for raw in r:
         line = raw.decode("utf-8", "replace").strip()
         if not line.startswith("data:"):
@@ -391,6 +424,20 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def friendly_error(e, s):
+    if isinstance(e, APIError):
+        msg = e.detail
+        try:
+            j = json.loads(e.detail)
+            msg = (j.get("error") or {}).get("message") or j.get("message") or e.detail
+        except (ValueError, AttributeError):
+            pass
+        if e.code in (401, 403):
+            return f"The AI service refused the request ({e.code}). Check the API key in Settings. {msg}"
+        if e.code == 404:
+            return f"Not found at {s.get('base_url')} ({e.code}). Check the server address and model name. {msg}"
+        if e.code == 429:
+            return f"The AI service is busy or your usage limit was reached (429). Wait a moment and try again. {msg}"
+        return f"The AI service returned an error ({e.code}): {msg}"
     if isinstance(e, urllib.error.HTTPError):
         detail = ""
         try:

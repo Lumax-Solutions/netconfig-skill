@@ -294,6 +294,7 @@ async function send(text) {
   } catch (e) {
     if (e.name !== "AbortError") {
       el.classList.add("error");
+      if (!splitThinking(out).out) el.querySelector(".body")?.remove();
       const p = document.createElement("p"); p.textContent = "⚠ " + e.message; el.appendChild(p);
       if (/model|reach|Settings|refused/i.test(e.message)) {
         const b = document.createElement("button"); b.textContent = "Open Settings"; b.onclick = openSettings; el.appendChild(b);

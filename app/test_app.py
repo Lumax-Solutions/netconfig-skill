@@ -107,5 +107,29 @@ try:
 except urllib.error.HTTPError as e:
     check("other websites are refused", e.code == 403)
 
+
+class StrictModel(BaseHTTPRequestHandler):  # like newer Claude models: rejects `temperature`
+    def log_message(self, *a):
+        pass
+
+    def do_POST(self):
+        b = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+        if "temperature" in b:
+            self.send_response(400)
+            self.end_headers()
+            self.wfile.write(b'{"type":"error","error":{"message":"`temperature` is deprecated for this model."}}')
+            return
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b'data: {"type":"content_block_delta","delta":{"type":"text_delta","text":"ok"}}\n\n')
+
+
+strict = ThreadingHTTPServer(("127.0.0.1", 0), StrictModel)
+threading.Thread(target=strict.serve_forever, daemon=True).start()
+got = []
+A.stream_chat({"preset": "anthropic", "base_url": f"http://127.0.0.1:{strict.server_port}/v1", "api_key": "k", "model": "m"},
+              "sys", [{"role": "user", "content": "hi"}], lambda k, t: got.append(t))
+check("retries without temperature when the model rejects it", got == ["ok"])
+
 print(f"\n{'All tests passed' if not failures else f'{failures} FAILED'}")
 sys.exit(1 if failures else 0)

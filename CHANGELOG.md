@@ -16,9 +16,11 @@ MAJOR = structure/behaviour change, MINOR = new platform or section, PATCH = cor
   - Removes passwords, keys and SNMP communities from pasted configs on the user's computer (with a
     report of what was removed); optional public-IP masking.
   - Advice only: never connects to devices. Listens on 127.0.0.1 and refuses other origins.
-  - `app/test_app.py` (27 offline checks) runs in CI.
+  - `app/test_app.py` (28 offline checks) runs in CI.
   - User guide with screenshots (`app/README.md`): install, AI setup, each step, reading the
     answer, privacy, troubleshooting, FAQ.
+  - Works with models that reject optional settings: drops `temperature` (newer Claude models)
+    or switches to `max_completion_tokens` (OpenAI reasoning models) and retries automatically.
   - `scripts/build_app_zip.py` builds `NetConfig-Assistant.zip` (app + skill, start files at the
     top level) for releases.
 
