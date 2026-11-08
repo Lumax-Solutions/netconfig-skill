@@ -410,7 +410,9 @@ $("#btn-settings").onclick = openSettings;
 $("#s-save").onclick = async () => {
   const f = formSettings();
   if (!f.model) { $("#s-result").className = "small bad"; $("#s-result").textContent = "Choose or type a model first (press ↻ Load models)."; return; }
-  const { settings } = await api("/api/settings", f);
+  let settings;
+  try { ({ settings } = await api("/api/settings", f)); }
+  catch (e) { $("#s-result").className = "small bad"; $("#s-result").textContent = "✗ Couldn't save: " + e.message; return; }
   state.meta.settings = settings;
   $("#settings").close();
   refreshAiStatus();

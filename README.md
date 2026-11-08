@@ -11,10 +11,8 @@ already running**, reviews and audits configs, reads `show`/`debug` output, and 
 between vendors — with state checks, a minimal diff, an armed rollback and allow/deny tests built
 in, so you don't break production or lock yourself out of a remote box.
 
-> **Not a developer?** Use the **[NetConfig Assistant desktop app](app/README.md)**: pick your
-> device, say what you want, and get step-by-step commands with Copy buttons. It runs on your own
-> computer with a local AI model (or Claude/OpenAI) and removes passwords from pasted configs
-> before sending. Download the ZIP, open `app/`, double-click `start-windows.bat`.
+> **Not a developer?** Use the **[NetConfig Assistant desktop app](#desktop-app-for-non-experts)**:
+> pick your device, say what you want, and get step-by-step commands with Copy buttons.
 
 ## See it work: tighten SSH without locking yourself out
 
@@ -85,6 +83,30 @@ dual-stack, hardening, audits, cross-vendor migration, troubleshooting.
 > this project is not affiliated with or endorsed by any vendor.
 
 ---
+
+## Desktop app for non-experts
+
+**NetConfig Assistant** puts the skill behind a simple, guided app that runs on your own computer.
+No agent or coding tool needed.
+
+![NetConfig Assistant: a FortiGate change explained step by step](app/docs/07-answer.jpg)
+
+1. **Choose the device** (or *Not sure*), **choose the task** (set up, change a live device, fix,
+   review, migrate, ask), and **describe it** in your own words, in any language.
+2. Get a plain-language answer: what will change, the checks it made, numbered steps with a
+   **Copy** button on each command, tests (what should work *and* stay blocked), and how to undo it.
+3. Ask follow-ups or paste command output; save the conversation as a file.
+
+- **Your AI, your choice:** a model on your computer (llama.cpp, Ollama, LM Studio: private and
+  free) or Claude, OpenAI and other services.
+- **Secrets stay home:** passwords and keys in pasted configs are removed on your computer before
+  sending, and the app shows what it removed.
+- **Advice only:** it never connects to your devices.
+
+**Get it:** download `NetConfig-Assistant.zip` from the
+[latest release](https://github.com/Lumax-Solutions/netconfig-skill/releases/latest), unzip it, and
+double-click **Start NetConfig Assistant**. Needs Python 3.9+.
+Full guide with screenshots: **[app/README.md](app/README.md)**.
 
 ## What makes it different from asking an LLM directly
 
@@ -186,8 +208,8 @@ and the agent installs the skill itself.
 /plugin install netconfig@netconfig-skill
 ```
 
-**No agent? Use the desktop app** — [`app/`](app/README.md): a guided web app on your own computer
-for people new to networking, with local or cloud AI.
+**No agent? Use the desktop app** — [NetConfig Assistant](app/README.md): a guided app on your own
+computer for people new to networking, with local or cloud AI.
 
 **Any other tool or local model** — use the single-file build [`dist/AGENTS.md`](dist/AGENTS.md)
 as a rules file or system prompt.
@@ -221,6 +243,7 @@ install.ps1 / install.sh      one-line installers
 dist/AGENTS.md                single-file build for non-skill tools (generated)
 scripts/validate.py           structure / link / paste-safety checks (run in CI)
 scripts/build_agents_md.py    builds dist/AGENTS.md
+scripts/build_app_zip.py      builds the NetConfig-Assistant.zip release download
 ```
 
 ## Running the evaluations

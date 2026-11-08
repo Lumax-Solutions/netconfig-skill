@@ -173,6 +173,7 @@ def save_settings(new):
     for k in DEFAULT_SETTINGS:
         if k in new:
             s[k] = new[k]
+    SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
     SETTINGS_FILE.write_text(json.dumps(s, indent=2), encoding="utf-8")
     try:
         os.chmod(SETTINGS_FILE, 0o600)
