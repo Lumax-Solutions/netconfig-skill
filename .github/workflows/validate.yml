@@ -72,8 +72,9 @@ jobs:
           hermes skills install Lumax-Solutions/netconfig-skill/skills/network-config --category networking --yes --force
           test -f "$HERMES_HOME/skills/networking/network-config/SKILL.md"
           grep -q '"network-config"' "$HERMES_HOME/skills/.hub/lock.json"
-          COLUMNS=200 hermes skills list | tee list.txt
-          grep -E 'network-config +│ +networking +│ +hub' list.txt
+          # hub installs are listed with their source (e.g. skills.sh), so filter with --source hub
+          COLUMNS=200 hermes skills list --source hub | tee list.txt
+          grep -E 'network-config +│ +networking +│' list.txt
           printf 'y\n' | hermes skills uninstall network-config
           test ! -e "$HERMES_HOME/skills/networking/network-config"
 
