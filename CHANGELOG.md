@@ -3,6 +3,15 @@
 All notable changes to this skill. Versions follow [SemVer](https://semver.org/):
 MAJOR = structure/behaviour change, MINOR = new platform or section, PATCH = corrections.
 
+## [Unreleased]
+
+### Fixed
+- `dist/AGENTS.md` still told the model to "read the reference file(s)" although every reference
+  is included inline: the build's text replacement stopped matching after the SKILL.md wording
+  changed in 1.3.0. The build now matches across line breaks, also rewrites the "syntax lives in
+  `references/`" sentence, and **fails** if a rewrite no longer matches or the instruction remains,
+  so CI catches it. Reported by a Hermes Agent review.
+
 ## [1.4.0] — 2026-11-08
 
 Theme: a desktop app for people who don't use AI agents. The skill's own content is unchanged from

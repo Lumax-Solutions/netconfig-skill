@@ -25,11 +25,29 @@ meta = re.match(r"^---\n(.*?)\n---\n", core, re.S)
 version = re.search(r'version:\s*"?([^"\n]+)', meta.group(1)).group(1) if meta else "?"
 core = core[meta.end():] if meta else core
 
-# In the single-file build every reference is inline, so rewrite the routing instruction.
-core = core.replace(
-    "**Before writing any config, read the reference file(s) for the platform(s) involved**",
-    "**Before writing any config, consult the platform section(s) below for the platform(s) involved**",
-)
+# In the single-file build every reference is inline, so rewrite the routing instructions.
+# Whitespace in the patterns matches any run of spaces/newlines, so re-wrapping SKILL.md doesn't
+# break them; the build fails if a pattern stops matching (SKILL.md wording changed).
+REWRITES = [
+    (r"Platform syntax lives in\s+`references/`\.",
+     "Platform syntax is in the *Platform references* sections below (each starts with a "
+     "`<!-- references/<name>.md -->` marker; paths like `references/fortigate.md` in this file "
+     "refer to those sections)."),
+    (r"\*\*Before writing any config or troubleshooting steps,\s+read the reference file\(s\)\s+"
+     r"for the platform\(s\)\s+involved\*\*",
+     "**Before writing any config or troubleshooting steps, use the platform section(s) below for "
+     "the platform(s) involved**"),
+]
+for pattern, replacement in REWRITES:
+    core, n = re.subn(pattern, replacement, core)
+    if n == 0:
+        raise SystemExit(
+            "build_agents_md.py: this pattern no longer matches SKILL.md, so the single-file build "
+            f"would keep a 'read the reference file' instruction:\n  {pattern}\n"
+            "Update REWRITES to the new wording.")
+if re.search(r"read the reference file", core, re.I):
+    raise SystemExit("build_agents_md.py: SKILL.md still tells the model to 'read the reference file' "
+                     "after rewriting; add a rule to REWRITES.")
 
 wanted = {w.strip() for w in args.only.split(",") if w.strip()}
 refs = sorted((SKILL / "references").glob("*.md"))

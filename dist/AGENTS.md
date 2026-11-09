@@ -9,9 +9,7 @@ bad ACL on the management interface can lock them out remotely.
 
 ## How to use this skill
 
-This file holds the workflow and the rules that apply to every vendor. Platform syntax lives in
-`references/`. **Before writing any config or troubleshooting steps, read the reference file(s) for the platform(s)
-involved** — they hold the version-correct show/diagnose commands too. For migrations, VPNs or
+This file holds the workflow and the rules that apply to every vendor. Platform syntax is in the *Platform references* sections below (each starts with a `<!-- references/<name>.md -->` marker; paths like `references/fortigate.md` in this file refer to those sections). **Before writing any config or troubleshooting steps, use the platform section(s) below for the platform(s) involved** — they hold the version-correct show/diagnose commands too. For migrations, VPNs or
 problems between vendors, read both. Don't write vendor syntax from memory when a
 reference exists; the references contain version-specific corrections that memory often gets wrong.
 
