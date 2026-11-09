@@ -5,14 +5,16 @@ Part of the `network-config` skill. Read `../SKILL.md` first for the workflow an
 ## Check Point (Gaia R81.x)
 
 Two layers: **Gaia OS** (clish) for interfaces/routing; **security policy** via SmartConsole or the Management API, then *Publish* and *Install Policy*.
+Gaia clish, on the gateway:
 ```
-# clish (gateway)
 set interface eth1 ipv4-address 10.0.0.1 mask-length 24
 set interface eth1 state on
 set static-route default nexthop gateway address 203.0.113.1 on
 set static-route 10.1.0.0/16 nexthop gateway address 10.0.0.254 on
 save config
-# Management API (management server, expert mode)
+```
+Management API, on the management server (expert mode):
+```
 mgmt_cli login user admin > id.txt
 mgmt_cli add host name WEB-SRV ip-address 10.0.0.10 -s id.txt
 mgmt_cli add access-rule layer "Network" position top name "Allow-Web" source Any destination WEB-SRV service https action Accept track.type Log -s id.txt

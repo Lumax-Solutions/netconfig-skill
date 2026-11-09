@@ -53,7 +53,23 @@ Theme: first-class Hermes Agent support.
   Same result; Hermes' scanner rated the redirect into `/etc` *critical*, which blocks installation
   even with `--force`.
 
-### Fixed
+### Fixed (from an independent review of the skill)
+- **Juniper:** the example ran `commit confirmed 5` and `commit` in the same paste, which confirms
+  at once and defeats the automatic rollback. It now stops after `commit confirmed 5`, says what to
+  test from a new session, and confirms with `commit` as a separate step.
+- **Juniper BGP example** now matches its own advice: a `discard` static route anchors the
+  advertised prefix (before, nothing would have been advertised), the export policy matches
+  `protocol static` + a prefix list and rejects the rest, and there is an import policy and an
+  `accepted-prefix-limit`; on an SRX the zones now allow BGP and OSPF to reach the device. It
+  explains that the static default outranks the BGP default and how to switch, and how to size the
+  prefix limit for a full table.
+- **Paste blocks:** comment-only `# …` lines moved out of device paste blocks (Juniper, Palo Alto,
+  FortiGate troubleshooting); Check Point's clish and `mgmt_cli` commands, which run in different
+  shells, are now separate blocks. `validate.py` now fails on `#` lines in device paste blocks and
+  on any other `commit …` (plain, `and-quit`, `comment`, `synchronize`) in the same block as
+  `commit confirmed`.
+- **Coverage labels:** Palo Alto and Juniper moved from *Detailed* to *Standard* (they have no full
+  IPsec/HA/GlobalProtect examples yet), so answers for them include the "verify on your device" note.
 - An eval grader (`mikrotik-vlan-guest/graders/09-check.md`) was worded "do not tell the user to
   reconnect via MAC-winbox…", which Hermes' scanner flags as *critical* (deception), making the
   full skill folder *dangerous*. Reworded to "they must not rely on reconnecting via MAC-winbox…";

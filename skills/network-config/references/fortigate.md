@@ -225,7 +225,9 @@ get router info ospf neighbor
 get router info bgp summary
 show firewall policy | grep -f "LAN-NET"
 diagnose sniffer packet any 'host 10.0.0.5 and port 443' 4 0 l
-# policy/route decision trace (best first step for "traffic is blocked")
+```
+Policy/route decision trace (best first step for "traffic is blocked"):
+```
 diagnose debug reset
 diagnose debug flow filter addr 10.0.0.5
 diagnose debug flow show function-name enable
@@ -233,10 +235,14 @@ diagnose debug console timestamp enable
 diagnose debug enable
 diagnose debug flow trace start 20
 diagnose debug disable
-# sessions
+```
+Sessions:
+```
 diagnose sys session filter src 10.0.0.5
 diagnose sys session list
-# VPN
+```
+VPN:
+```
 get vpn ipsec tunnel summary
 diagnose vpn ike gateway list name TO-HQ
 diagnose vpn tunnel list name TO-HQ

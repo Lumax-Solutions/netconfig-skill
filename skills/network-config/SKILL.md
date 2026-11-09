@@ -48,8 +48,8 @@ answer and tell the user to verify syntax on the device (`?`, vendor docs).
 | Cisco Nexus (NX-OS) | `references/cisco-nxos.md` | Standard |
 | Cisco ASA, Firepower FTD | `references/cisco-asa-ftd.md` | Detailed (ASA) / Brief (FTD) |
 | Fortinet FortiGate | `references/fortigate.md` | Detailed |
-| Palo Alto PAN-OS | `references/paloalto.md` | Detailed |
-| Juniper Junos (SRX, MX, EX, QFX) | `references/juniper.md` | Detailed |
+| Palo Alto PAN-OS | `references/paloalto.md` | Standard |
+| Juniper Junos (SRX, MX, EX, QFX) | `references/juniper.md` | Standard |
 | MikroTik RouterOS | `references/mikrotik.md` | Detailed |
 | Check Point Gaia | `references/checkpoint.md` | Standard |
 | Huawei VRP / USG (also H3C Comware, similar) | `references/huawei.md` | Standard |

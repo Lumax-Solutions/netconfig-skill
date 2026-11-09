@@ -180,8 +180,8 @@ consistency (backup, conflict checks, blocked-traffic tests in every answer) mor
 
 | Depth | Platforms |
 |---|---|
-| **Detailed** (full syntax, version notes, tested scenarios) | Cisco IOS/IOS-XE, Cisco ASA, FortiGate, Palo Alto PAN-OS, Juniper Junos, MikroTik RouterOS |
-| **Standard** (core syntax and troubleshooting) | Cisco NX-OS, Check Point, Huawei VRP/USG, Aruba AOS-CX, Linux / Windows / cloud firewalls |
+| **Detailed** (full syntax, version notes, tested scenarios) | Cisco IOS/IOS-XE, Cisco ASA, FortiGate, MikroTik RouterOS |
+| **Standard** (core syntax and troubleshooting) | Palo Alto PAN-OS, Juniper Junos, Cisco NX-OS, Check Point, Huawei VRP/USG, Aruba AOS-CX, Linux / Windows / cloud firewalls |
 | **Brief** (pointers; verify on the device) | Cisco FTD, Arista EOS, SonicWall, VyOS/EdgeOS, pfSense/OPNsense, Sophos, UniFi |
 
 ## Install

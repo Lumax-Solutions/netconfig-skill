@@ -10,6 +10,7 @@ Checks:
   - every `references/*.md` path mentioned in SKILL.md exists, and every reference file is linked
   - code fences are balanced in every markdown file
   - no trailing `!`/`#` comments on IOS / FortiOS command lines inside code blocks
+  - no comment-only `#` lines in device paste blocks, and no other `commit …` (plain, `and-quit`, `comment`, `synchronize`) in the same block as `commit confirmed`
   - each eval case has prompt.md, case.yaml and at least one grader
 
 Exit code 0 = OK, 1 = problems found.
@@ -93,6 +94,30 @@ for md in [SKILL / "SKILL.md", *sorted((SKILL / "references").glob("*.md"))]:
                 continue
             if in_code and TRAILING.match(line) and "'" not in line and '"' not in line:
                 err(f"{md.relative_to(ROOT)}:{n}: trailing comment on a command line: {line.strip()}")
+
+# Paste blocks: no comment-only "# ..." lines in device CLI blocks (PAN-OS / Junos configure mode and
+# others reject or misparse them; put headings outside the block), and never "commit" in the same block
+# as "commit confirmed" (that confirms instantly and defeats the automatic rollback).
+SHELL_LANGS = {"bash", "sh", "shell", "console", "powershell", "ps1", "yaml", "json", "python", "nft"}
+for md in [SKILL / "SKILL.md", *sorted((SKILL / "references").glob("*.md"))]:
+    in_code, lang, block = False, "", []
+    for n, line in enumerate(md.read_text(encoding="utf-8").splitlines(), 1):
+        if line.startswith("```"):
+            in_code = not in_code
+            lang, block = line[3:].strip().lower(), []
+            continue
+        if not in_code:
+            continue
+        stripped = line.strip()
+        if (stripped.startswith("#") and md.name != "host-cloud.md" and lang not in SHELL_LANGS):
+            err(f"{md.relative_to(ROOT)}:{n}: comment line inside a paste block (move it outside): {stripped}")
+        # any commit (plain, and-quit, comment ..., synchronize ...) except check/confirmed
+        is_confirming_commit = (re.match(r"commit(\s|$)", stripped)
+                                and not re.match(r"commit\s+(check|confirmed)\b", stripped))
+        if is_confirming_commit and any(b.startswith("commit confirmed") for b in block):
+            err(f"{md.relative_to(ROOT)}:{n}: '{stripped}' in the same paste block as 'commit confirmed' "
+                "(confirms immediately; split it so the user tests first)")
+        block.append(stripped)
 
 evals = SKILL / "evals"
 if evals.is_dir():

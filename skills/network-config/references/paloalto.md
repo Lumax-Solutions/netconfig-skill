@@ -5,7 +5,8 @@ Part of the `network-config` skill. Read `../SKILL.md` first for the workflow an
 ## Palo Alto Networks PAN-OS (set format)
 
 Changes go to candidate config; nothing is live until `commit`. Security rules use **pre-NAT IP
-and post-NAT zone**.
+and post-NAT zone**. In the example, the inbound DNAT rule matches the public IP with zones
+untrust → untrust, and its security rule allows that public IP from untrust to trust.
 ```
 configure
 set network interface ethernet ethernet1/1 layer3 ip 203.0.113.2/30
@@ -20,7 +21,6 @@ set address WEB-SRV ip-netmask 10.0.0.10/32
 set rulebase security rules Trust-to-Internet from trust to untrust source LAN-NET destination any application [ web-browsing ssl dns ] service application-default action allow
 set rulebase security rules Trust-to-Internet profile-setting group default
 set rulebase nat rules SNAT-Internet from trust to untrust source LAN-NET destination any service any source-translation dynamic-ip-and-port interface-address interface ethernet1/1
-# Inbound DNAT: NAT rule uses public IP, zone untrust->untrust
 set rulebase nat rules DNAT-Web from untrust to untrust destination 203.0.113.2 service service-https destination-translation translated-address WEB-SRV
 set rulebase security rules Inbound-Web from untrust to trust destination 203.0.113.2 application ssl service application-default action allow
 validate full
