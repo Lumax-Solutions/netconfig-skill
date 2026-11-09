@@ -13,13 +13,16 @@ Theme: first-class Hermes Agent support.
     legacy `%USERPROFILE%\.hermes` only if it has a `config.yaml`), else `~/.hermes`
     (macOS, Linux, WSL). Detects Hermes when that folder exists or `hermes` is on PATH.
   - Runs `hermes skills install Lumax-Solutions/netconfig-skill/skills/network-config --category
-    networking --yes`, so `hermes skills update` works, and reads the result (Hermes can exit 0
-    without installing). A scanner **caution** block is explained in one line and retried with
-    `--force`; a **dangerous** verdict stops the script with an error and nothing is copied; other
-    failures (rate limit, offline, older Hermes) fall back to copying the skill to
-    `<Hermes home>/skills/networking/network-config` without `evals/`.
-  - New options: `--hermes-profile` / `-HermesProfile`, `--no-force` / `-NoForce` (no forced
-    retry; copy instead), `--no-hermes-cli` / `-NoHermesCli`,
+    networking --yes --force` once, so `hermes skills update` works, and reads the result (Hermes
+    can exit 0 without installing). `--force` accepts the expected **caution** verdict, explained
+    in one line after the install; Hermes never lets it override **dangerous**, which stops the
+    script with an error and nothing copied. A single attempt halves the GitHub API calls (60/hour
+    without a token). Other failures (rate limit, offline, older Hermes) fall back to copying the
+    skill to `<Hermes home>/skills/networking/network-config` without `evals/`; the message says a
+    rate limit resets within an hour and that re-running (or adding `GITHUB_TOKEN`) switches the
+    copy to an updatable hub install.
+  - New options: `--hermes-profile` / `-HermesProfile`, `--no-force` / `-NoForce` (install
+    without `--force`; a caution block copies instead), `--no-hermes-cli` / `-NoHermesCli`,
     `--source` / `-Source` (install from a local checkout). `--uninstall` uses
     `hermes skills uninstall` for hub installs and also removes the copy that older versions put in
     `%USERPROFILE%\.hermes\skills` on Windows. `--dry-run` shows the exact command and path.
@@ -30,11 +33,19 @@ Theme: first-class Hermes Agent support.
 - **INSTALL.md "Hermes Agent" section:** one-liner, tap, `/skills install` in a chat, the
   `GITHUB_TOKEN` rate-limit fix, profiles, update/uninstall, the Windows path, and
   `skills.external_dirs` for people who prefer `~/.agents/skills`. README: Hermes one-liner.
-- **CI job "Hermes Agent install":** 95 offline installer checks for both scripts (a stub `hermes` covers caution, dangerous and
-  rate-limit results) (pwsh on Ubuntu,
+- **CI job "Hermes Agent install":** 109 offline installer checks for both scripts (a stub `hermes` covers caution, dangerous,
+  rate-limit and re-run results) (pwsh on Ubuntu,
   Windows paths simulated), the real Hermes 0.19.0 CLI listing the copied skill in category
   `networking`, Hermes' security scanner run on the whole skill folder, `evals/` included (the job fails on *dangerous*; *caution* is expected), and on `main`
   a real `hermes skills install … --force` from GitHub, `hermes skills list` and uninstall.
+
+### Tested on real machines
+- Windows, PowerShell 5.1, Hermes 0.20.5: Hermes path, DANGEROUS abort (against the old main),
+  copy install without `evals/`, uninstall of both copies, nothing written to `%USERPROFILE%\.hermes`;
+  a token-less run hit GitHub's rate limit and fell back to the copy, which led to the single
+  `--force` attempt above.
+- Linux, Hermes 0.19.0: `install.sh` against the pushed main ended as a hub install
+  (`scan_verdict: caution`).
 
 ### Changed
 - `references/host-cloud.md` and `ipv6.md`: persist iptables rules with `netfilter-persistent save`

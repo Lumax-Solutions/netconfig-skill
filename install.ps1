@@ -9,7 +9,7 @@
 #   .\install.ps1 -DryRun                # show the exact paths and commands, change nothing
 #   .\install.ps1 -HermesProfile work    # install into / remove from that Hermes profile
 #   .\install.ps1 -NoHermesCli           # for Hermes, copy the folder even if `hermes` is available
-#   .\install.ps1 -NoForce               # if Hermes' scanner blocks it (CAUTION), copy instead of retrying with --force
+#   .\install.ps1 -NoForce               # run `hermes skills install` without --force; a CAUTION block copies instead
 #   .\install.ps1 -Source C:\path\repo   # use a local checkout instead of downloading
 #
 # Installs skills\network-config into %USERPROFILE%\.agents\skills (shared folder read by Codex, Cursor,
@@ -18,10 +18,10 @@
 # Continue.
 # Hermes Agent does NOT read ~\.agents\skills by default. If Hermes is installed (its home folder exists or
 # `hermes` is on PATH) the skill is installed with `hermes skills install ... --category networking`, so
-# `hermes skills update` works. Hermes' scanner rates this skill CAUTION (it documents sudo/system commands),
-# so a CAUTION block is retried with --force; a DANGEROUS verdict stops the script and nothing is copied.
-# Other failures (rate limit, offline, older Hermes) fall back to copying the folder to
-# <hermes-home>\skills\networking\network-config.
+# `hermes skills update` works. It passes --force: Hermes' scanner rates this skill CAUTION (it documents
+# sudo/system commands), and --force never overrides a DANGEROUS verdict, which stops the script with
+# nothing copied. Other failures (rate limit, offline, older Hermes) fall back to copying the folder to
+# <hermes-home>\skills\networking\network-config; re-run later to switch to a hub install.
 # Hermes home = $env:HERMES_HOME, else %LOCALAPPDATA%\hermes on Windows (a legacy %USERPROFILE%\.hermes is
 # used only if it has a config.yaml and %LOCALAPPDATA%\hermes doesn't exist), else ~/.hermes elsewhere.
 param([switch]$Project, [switch]$Uninstall, [switch]$DryRun, [string]$HermesProfile = '',
@@ -65,6 +65,9 @@ function Invoke-HermesInstall($hargs) {
     try { $out = (& hermes @HPrefix @hargs 2>&1 | Out-String) } catch { $out = "$_" } finally { $env:COLUMNS = $old }
     Write-Host $out
     $flat = ($out -replace '\s+', ' ')
+    $script:HVerdict = ''
+    if ($flat -match 'Verdict: (SAFE|CAUTION|DANGEROUS)') { $script:HVerdict = $Matches[1].ToLower() }
+    $script:HRate = $flat -match 'rate limit'
     $blocked = $flat -match 'Installation blocked'
     if ($blocked -and ($flat -match 'dangerous verdict|Verdict: DANGEROUS')) { return 'dangerous' }
     if ($blocked -and ($flat -match 'caution verdict|Verdict: CAUTION')) { return 'caution' }
@@ -167,27 +170,31 @@ try {
             $method = ''
             if ($HCli) {
                 $hargs = @('skills', 'install', $HubId, '--category', $Category, '--yes')
-                if (Test-HubInstalled) { $hargs += '--force' }   # reinstall over an existing hub install
+                # One attempt with --force: Hermes' scanner rates this skill CAUTION (it documents sudo/system
+                # commands), and --force never overrides a DANGEROUS verdict, so a first try without it adds no
+                # safety and doubles the GitHub API calls (60/hour without a token).
+                if ((-not $NoForce) -or (Test-HubInstalled)) { $hargs += '--force' }
                 $cmd = Show-Hermes @hargs
                 Write-Host "Hermes: $cmd"
                 if ($DryRun) {
                     Write-Host "  (dry-run) $cmd"
-                    if (-not $NoForce) { Write-Host "  (dry-run) if Hermes' scanner blocks it with a CAUTION verdict: the same command with --force" }
                     Write-Host "  (dry-run) if Hermes' scanner says DANGEROUS: stop, nothing is copied"
+                    if ($NoForce) { Write-Host "  (dry-run) if it blocks a CAUTION verdict (no --force): copy to $HDest" }
                     Write-Host "  (dry-run) if it fails for another reason (rate limit, offline, older Hermes): copy to $HDest"
                     $method = 'dry-run'
                 } else {
                     # remove an older local copy so the hub install doesn't collide with it
                     if (-not (Test-HubInstalled)) { foreach ($d in Get-HermesCopies) { if (Test-Ours $d) { Remove-Item -Recurse -Force $d } } }
                     $r = Invoke-HermesInstall $hargs
-                    if (($r -eq 'caution') -and -not $NoForce) {
-                        Write-Host "Hermes: the scanner rated it CAUTION because this network-admin skill documents sudo and other"
-                        Write-Host "        system commands (it never runs them). Retrying with --force. Review it any time with:"
-                        Write-Host "        hermes skills inspect $HubId"
-                        $r = Invoke-HermesInstall ($hargs + '--force')
-                    }
                     switch ($r) {
-                        'ok'        { $method = 'hub' }
+                        'ok' {
+                            $method = 'hub'
+                            if ($script:HVerdict -eq 'caution') {
+                                Write-Host "Hermes: the scanner rated it CAUTION because this network-admin skill documents sudo and other"
+                                Write-Host "        system commands (it never runs them); installed with --force. Review it any time with:"
+                                Write-Host "        hermes skills inspect $HubId"
+                            }
+                        }
                         'dangerous' {
                             Write-Host "Hermes: the scanner rated it DANGEROUS, so it was NOT installed for Hermes (nothing was copied)." -ForegroundColor Red
                             Write-Host "        Please open an issue with the output above: https://github.com/$Repo/issues" -ForegroundColor Red
@@ -195,8 +202,13 @@ try {
                         }
                         'caution'   { Write-Host "Hermes: blocked by the scanner (CAUTION) and -NoForce was given; copying instead." }
                         default {
-                            Write-Host "Hermes: 'hermes skills install' did not complete (rate limit, offline or older Hermes?)."
-                            Write-Host "        If it was a GitHub rate limit, add GITHUB_TOKEN=<token> to $(J $HH '.env'). Copying instead."
+                            if ($script:HRate) {
+                                Write-Host "Hermes: GitHub's API rate limit was hit (60 requests/hour without a token); it resets within an hour."
+                            } else {
+                                Write-Host "Hermes: 'hermes skills install' did not complete (offline, or an older Hermes?)."
+                            }
+                            Write-Host "        Copying instead. To switch the copy to an updatable hub install later, re-run this"
+                            Write-Host "        installer (after the limit resets, or after adding GITHUB_TOKEN=<token> to $(J $HH '.env'))."
                         }
                     }
                 }

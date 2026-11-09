@@ -193,16 +193,21 @@ hermes skills install Lumax-Solutions/netconfig-skill/skills/network-config --ca
 - **Update:** `hermes skills update network-config`. **Remove:** `hermes skills uninstall network-config`.
 
 **Or use our install script** (Option B above). It finds the Hermes home folder and, if the
-`hermes` command works, runs `hermes skills install … --category networking --yes`:
+`hermes` command works, runs the same command as above, once:
+`hermes skills install … --category networking --yes --force`.
 
-- If Hermes' scanner blocks it with a **caution** verdict (expected, see above), the script says
-  why in one line, points you to `hermes skills inspect`, and retries with `--force`. Add
-  `--no-force` / `-NoForce` to skip that retry; the skill is then copied instead.
-- If the scanner says **dangerous**, the script stops with an error and installs nothing for
-  Hermes: please [open an issue](https://github.com/Lumax-Solutions/netconfig-skill/issues).
+- `--force` only accepts the expected **caution** verdict (see above); after installing, the
+  script says so in one line and points you to `hermes skills inspect`. One attempt keeps the
+  GitHub API calls down (60 an hour without a token).
+- If the scanner says **dangerous**, `--force` can't override it: the script stops with an error
+  and installs nothing for Hermes. Please [open an issue](https://github.com/Lumax-Solutions/netconfig-skill/issues).
 - For other failures (rate limit, offline, older Hermes) and when the `hermes` command isn't found,
   it copies the skill to `<Hermes home>/skills/networking/network-config` (without `evals/`).
-  A copied skill is a *local* skill: `hermes skills update` won't update it, so re-run the script.
+  A copied skill is a *local* skill: `hermes skills update` won't update it. Re-run the script
+  later (a rate limit resets within an hour) or after adding `GITHUB_TOKEN`, and it replaces the
+  copy with an updatable hub install.
+- `--no-force` / `-NoForce` runs the install without `--force`; a caution block then copies the
+  skill instead.
 
 Add `--hermes-profile <name>` / `-HermesProfile <name>` for a profile; `--dry-run` / `-DryRun`
 shows the exact command and path first.
@@ -266,7 +271,7 @@ python scripts/build_agents_md.py --only fortigate,cisco-ios --out my-network-pr
 | Skill not listed | Check the path ends in `network-config/SKILL.md` (not `network-config/network-config/…` or `skills/network-config/skills/…`). Restart the agent. |
 | Agent lists it twice | Some agents read both `~/.agents/skills/` and their own folder. Harmless; delete one copy if it bothers you. |
 | Hermes: "Installation blocked … caution verdict" | Expected: the scanner flags the `sudo` examples. Review with `hermes skills inspect …`, then add `--force` (see [Hermes Agent](#hermes-agent)). |
-| Hermes: rate-limit error | Add `GITHUB_TOKEN=<token>` to `$HERMES_HOME/.env` and retry. |
+| Hermes: rate-limit error | Wait for the limit to reset (within an hour) or add `GITHUB_TOKEN=<token>` to `$HERMES_HOME/.env`, then retry. If the install script copied the skill instead, re-running it switches to a hub install. |
 | Hermes ignores a skill committed to a repo | Project skills load only from a trusted repo: run `hermes skills trust` in the checkout (see [Hermes Agent](#hermes-agent)). |
 | Hermes doesn't list it | It doesn't read `~/.agents/skills/`. Check `<Hermes home>/skills/networking/network-config/SKILL.md` exists (Windows: under `%LOCALAPPDATA%\hermes`), then start a new session. |
 | Claude app upload rejected | The ZIP must contain the `network-config` folder at its top level, and *Code execution* must be on in settings. |

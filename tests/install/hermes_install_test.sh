@@ -6,9 +6,10 @@
 #   HERMES_REAL=1 bash tests/install/hermes_install_test.sh   # also check the copy with the real `hermes` CLI
 #
 # Cases: copy fallback (no hermes on PATH), dry-run paths (HERMES_HOME set / unset / Windows default /
-# legacy Windows home / profile), the `hermes skills install` path with a stub hermes (scanner CAUTION ->
-# forced retry, DANGEROUS -> abort without copying, rate limit -> copy, --no-force), uninstall (copy, hub,
-# old wrong Windows path).
+# legacy Windows home / profile), the `hermes skills install` path with a stub hermes (one call with
+# --force; CAUTION -> hub install + note, DANGEROUS -> abort without copying, rate limit -> copy and a
+# later re-run switches to hub, --no-force -> no --force and a CAUTION block copies), uninstall (copy,
+# hub, old wrong Windows path).
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 PASS=0; FAIL=0
@@ -54,11 +55,13 @@ case "$1 $2" in
                  echo "Installation blocked: Blocked (community source + dangerous verdict, 3 findings). --force does"
                  echo "not override a dangerous verdict."; exit 0 ;;
       caution)   echo "Scan: network-config (x/community)  Verdict: CAUTION"
+                 # Hermes prints the policy decision even when --force then installs it
+                 echo "Decision: BLOCKED — Blocked (community source + caution verdict, 16 findings). Use --force to override."
                  if [ "$force" = 0 ]; then
                    echo "Installation blocked: Blocked (community source + caution verdict, 16 findings). Use --force to"
                    echo "override."; exit 0
                  fi
-                 echo "Decision: ALLOWED — Force-installed despite caution verdict (16 findings)" ;;
+                 echo "Installed: $cat/network-config" ;;
     esac
     mkdir -p "$sk/$cat/network-config" "$sk/.hub"
     printf -- '---\nname: network-config\n---\n' > "$sk/$cat/network-config/SKILL.md"
@@ -74,7 +77,7 @@ run_suite() {   # run_suite sh|ps
   local kind="$1" R rc; local I="${kind}_run"
   local DRY="--dry-run" UN="--uninstall" PROF="--hermes-profile" NOCLI="--no-hermes-cli" NOFORCE="--no-force"
   if [ "$kind" = ps ]; then DRY="-DryRun"; UN="-Uninstall"; PROF="-HermesProfile"; NOCLI="-NoHermesCli"; NOFORCE="-NoForce"; fi
-  local HUBDIR CMD="hermes skills install Lumax-Solutions/netconfig-skill/skills/network-config --category networking --yes"
+  local HUBDIR; local CMD="hermes skills install Lumax-Solutions/netconfig-skill/skills/network-config --category networking --yes"
   echo "== $kind =="
   PATH_OVERRIDE="$BASEPATH"
 
@@ -111,20 +114,24 @@ run_suite() {   # run_suite sh|ps
   fresh; R="$($I HERMES_HOME="$T/nonexistent" -- $DRY)"
   check "$kind no Hermes home and no hermes on PATH: Hermes skipped" hasnt "$R" "Hermes:"
 
-  # 3. hermes on PATH (stub)
+  # 3. hermes on PATH (stub). One call, with --force (unless --no-force).
   PATH_OVERRIDE="$STUB:$BASEPATH"
+  calls() { grep -c "skills install" "$STUB_LOG" 2>/dev/null || echo 0; }
   fresh; export STUB_LOG="$T/stub.log"; HUBDIR="$T/hh/skills/networking/network-config"
   R="$($I HERMES_HOME="$T/hh" STUB_LOG="$STUB_LOG" -- $DRY)"
-  check "$kind dry-run with hermes: shows the exact command" has "$R" "$CMD"
-  check "$kind dry-run with hermes: explains caution / dangerous / copy" bash -c "grep -q 'CAUTION verdict' <<<\"\$0\" && grep -q 'DANGEROUS' <<<\"\$0\" && grep -qF '$HUBDIR' <<<\"\$0\"" "$R"
+  check "$kind dry-run with hermes: shows the exact command (with --force)" has "$R" "$CMD --force"
+  check "$kind dry-run with hermes: explains dangerous / copy" bash -c "grep -q 'DANGEROUS' <<<\"\$0\" && grep -qF '$HUBDIR' <<<\"\$0\"" "$R"
   check "$kind dry-run with hermes: hermes not called" test ! -e "$STUB_LOG"
-  # plain hub install, then re-install (adds --force), then uninstall
+  R="$($I HERMES_HOME="$T/hh" STUB_LOG="$STUB_LOG" -- $DRY $NOFORCE)"
+  check "$kind dry-run --no-force: command without --force" bash -c "grep -qF -- '$CMD' <<<\"\$0\" && ! grep -qF -- '$CMD --force' <<<\"\$0\"" "$R"
+  # plain hub install (scanner safe), re-install, uninstall
   R="$($I HERMES_HOME="$T/hh" STUB_LOG="$STUB_LOG" --)"
   check "$kind hub: installed into the networking category" test -f "$HUBDIR/SKILL.md"
-  check "$kind hub: first call without --force" grep -q -- "--category networking --yes$" "$STUB_LOG"
+  check "$kind hub: a single call, with --force" bash -c "[ \$(grep -c 'skills install' '$STUB_LOG') = 1 ] && grep -q -- '--category networking --yes --force$' '$STUB_LOG'"
   check "$kind hub: message names the method" has "$R" "installed with 'hermes skills install'"
+  check "$kind hub (safe verdict): no CAUTION note" hasnt "$R" "rated it CAUTION"
   R="$($I HERMES_HOME="$T/hh" STUB_LOG="$STUB_LOG" --)"
-  check "$kind hub: re-install adds --force" grep -q -- "--yes --force$" "$STUB_LOG"
+  check "$kind hub: re-install is again one call with --force" bash -c "[ \$(grep -c 'skills install' '$STUB_LOG') = 2 ] && [ \$(grep -c -- '--yes --force$' '$STUB_LOG') = 2 ]"
   R="$($I HERMES_HOME="$T/hh" STUB_LOG="$STUB_LOG" -- $UN)"
   check "$kind hub uninstall: hermes skills uninstall called" grep -q "skills uninstall network-config" "$STUB_LOG"
   check "$kind hub uninstall: folder gone" test ! -e "$HUBDIR"
@@ -133,35 +140,41 @@ run_suite() {   # run_suite sh|ps
   R="$($I HERMES_HOME="$T/hh" STUB_LOG="$STUB_LOG" -- $PROF work)"
   check "$kind hub (profile): hermes -p work skills install" grep -q "^stub hermes -p work skills install" "$STUB_LOG"
   check "$kind hub (profile): installed in the profile" test -f "$T/hh/profiles/work/skills/networking/network-config/SKILL.md"
-  # scanner CAUTION -> one-line reason, retried with --force, hub install
+  # scanner CAUTION -> one call with --force, hub install, explanation afterwards
   fresh; export STUB_LOG="$T/stub.log"; HUBDIR="$T/hh/skills/networking/network-config"
   R="$($I HERMES_HOME="$T/hh" STUB_LOG="$STUB_LOG" STUB_MODE=caution --)"
-  check "$kind caution: first try without --force" grep -q -- "--category networking --yes$" "$STUB_LOG"
-  check "$kind caution: retried with --force" grep -q -- "--category networking --yes --force$" "$STUB_LOG"
-  check "$kind caution: explains why" has "$R" "rated it CAUTION"
-  check "$kind caution: points to hermes skills inspect" has "$R" "hermes skills inspect Lumax-Solutions/netconfig-skill/skills/network-config"
+  check "$kind caution: a single call, with --force" bash -c "[ \$(grep -c 'skills install' '$STUB_LOG') = 1 ] && grep -q -- '--yes --force$' '$STUB_LOG'"
+  check "$kind caution: installed (hub)" bash -c "test -f '$HUBDIR/SKILL.md' && grep -q network-config '$T/hh/skills/.hub/lock.json'"
   check "$kind caution: ends as a hub install" has "$R" "installed with 'hermes skills install'"
-  check "$kind caution: installed" test -f "$HUBDIR/SKILL.md"
-  # CAUTION + --no-force -> copy, no forced retry
+  check "$kind caution: explains the verdict" has "$R" "rated it CAUTION"
+  check "$kind caution: points to hermes skills inspect" has "$R" "hermes skills inspect Lumax-Solutions/netconfig-skill/skills/network-config"
+  check "$kind caution: explanation comes after the install" bash -c "awk '/Installed: networking/{i=NR} /rated it CAUTION/{c=NR} END{exit !(i && c > i)}' <<<\"\$0\"" "$R"
+  # CAUTION + --no-force -> one call without --force, copy
   fresh; export STUB_LOG="$T/stub.log"; HUBDIR="$T/hh/skills/networking/network-config"
   R="$($I HERMES_HOME="$T/hh" STUB_LOG="$STUB_LOG" STUB_MODE=caution -- $NOFORCE)"
-  check "$kind caution + no-force: no --force retry" bash -c "! grep -q -- '--force' '$STUB_LOG'"
+  check "$kind caution + no-force: one call, without --force" bash -c "[ \$(grep -c 'skills install' '$STUB_LOG') = 1 ] && ! grep -q -- '--force' '$STUB_LOG'"
   check "$kind caution + no-force: copied instead" test -f "$HUBDIR/references/cisco-ios.md"
+  check "$kind caution + no-force: says so" has "$R" "blocked by the scanner (CAUTION)"
   check "$kind caution + no-force: says copies don't get 'hermes skills update'" has "$R" "won't update it"
-  # scanner DANGEROUS -> non-zero exit, nothing copied for Hermes, issue link
+  # scanner DANGEROUS (even with --force) -> non-zero exit, nothing copied for Hermes, issue link
   fresh; export STUB_LOG="$T/stub.log"; HUBDIR="$T/hh/skills/networking/network-config"
   R="$($I HERMES_HOME="$T/hh" STUB_LOG="$STUB_LOG" STUB_MODE=dangerous --)"; rc=$?
   check "$kind dangerous: non-zero exit (got $rc)" test "$rc" != 0
   check "$kind dangerous: nothing copied for Hermes" test ! -e "$HUBDIR"
-  check "$kind dangerous: no --force retry" bash -c "! grep -q -- '--force' '$STUB_LOG'"
+  check "$kind dangerous: a single call" bash -c "[ \$(grep -c 'skills install' '$STUB_LOG') = 1 ]"
   check "$kind dangerous: tells the user to open an issue" has "$R" "open an issue"
-  # rate limit -> copy fallback with the GITHUB_TOKEN hint
+  # rate limit -> one call, copy fallback, reset + re-run + GITHUB_TOKEN hints; a later re-run switches to hub
   fresh; export STUB_LOG="$T/stub.log"; HUBDIR="$T/hh/skills/networking/network-config"
   R="$($I HERMES_HOME="$T/hh" STUB_LOG="$STUB_LOG" STUB_MODE=ratelimit --)"
+  check "$kind rate limit: a single call" bash -c "[ \$(grep -c 'skills install' '$STUB_LOG') = 1 ]"
   check "$kind rate limit: falls back to copy" test -f "$HUBDIR/references/cisco-ios.md"
+  check "$kind rate limit: says it resets within an hour" has "$R" "resets within an hour"
+  check "$kind rate limit: says re-running switches to a hub install" has "$R" "re-run this"
   check "$kind rate limit: GITHUB_TOKEN hint" has "$R" "GITHUB_TOKEN"
-  check "$kind rate limit: no --force retry" bash -c "! grep -q -- '--force' '$STUB_LOG'"
   check "$kind rate limit: says copies don't get 'hermes skills update'" has "$R" "won't update it"
+  R="$($I HERMES_HOME="$T/hh" STUB_LOG="$STUB_LOG" STUB_MODE=caution --)"
+  check "$kind re-run after rate limit: now a hub install" bash -c "grep -q network-config '$T/hh/skills/.hub/lock.json' && grep -q \"installed with 'hermes skills install'\" <<<\"\$0\"" "$R"
+  check "$kind re-run after rate limit: the copy was replaced (no references/ left from it)" test ! -e "$HUBDIR/references"
   # --no-hermes-cli
   fresh; export STUB_LOG="$T/stub.log"
   R="$($I HERMES_HOME="$T/hh" STUB_LOG="$STUB_LOG" -- $NOCLI)"

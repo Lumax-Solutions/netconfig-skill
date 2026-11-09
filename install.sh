@@ -10,8 +10,8 @@
 #   --dry-run               show the exact paths and commands, change nothing
 #   --hermes-profile NAME   install into / remove from that Hermes profile instead of the default
 #   --no-hermes-cli         for Hermes, copy the folder even if the `hermes` command is available
-#   --no-force              if Hermes' scanner blocks the skill with a CAUTION verdict, copy it instead of
-#                           retrying `hermes skills install` with --force
+#   --no-force              run `hermes skills install` without --force; if Hermes' scanner blocks the
+#                           skill with a CAUTION verdict, copy it instead
 #   --source DIR            use a local checkout (repo root or skills/network-config) instead of downloading
 #
 # What it does: downloads the latest skills/network-config folder from GitHub and copies it into
@@ -21,10 +21,10 @@
 #   Claude Code, Antigravity, Cline, Kiro, Trae, Continue
 # Hermes Agent does NOT read ~/.agents/skills by default. If Hermes is installed (its home folder exists
 # or `hermes` is on PATH) the skill is installed with `hermes skills install ... --category networking`,
-# so `hermes skills update` works. Hermes' scanner rates this skill CAUTION (it documents sudo/system
-# commands), so a CAUTION block is retried with --force; a DANGEROUS verdict stops the script and nothing
-# is copied. Other failures (rate limit, offline, older Hermes) fall back to copying the folder to
-# <hermes-home>/skills/networking/network-config.
+# with --force, so `hermes skills update` works. Hermes' scanner rates this skill CAUTION (it documents
+# sudo/system commands); --force accepts that but never a DANGEROUS verdict, which stops the script with
+# nothing copied. Other failures (rate limit, offline, older Hermes) fall back to copying the folder to
+# <hermes-home>/skills/networking/network-config; re-run later to switch to a hub install.
 # Hermes home = $HERMES_HOME, else %LOCALAPPDATA%\hermes on native Windows (Git Bash), else ~/.hermes.
 set -euo pipefail
 
@@ -80,11 +80,15 @@ HERMES=0; { [ -d "$HH" ] || [ "$HCLI" = 1 ]; } && HERMES=1
 hermes_cmd() { if [ -n "$PROFILE" ]; then echo hermes -p "$PROFILE" "$@"; else echo hermes "$@"; fi; }
 hermes_run() { if [ -n "$PROFILE" ]; then hermes -p "$PROFILE" "$@"; else hermes "$@"; fi; }
 # hermes_install <args...>: run `hermes skills install`, show its output, set HRESULT to
-# ok | caution | dangerous | failed. Hermes can exit 0 when it didn't install, so read the result.
+# ok | caution (blocked) | dangerous (blocked) | failed, HVERDICT to the scan verdict it printed
+# (safe/caution/dangerous or empty) and HRATE=1 on a GitHub rate limit. Hermes can exit 0 when it
+# didn't install, so read the result instead of the exit code.
 hermes_install() {
   local out
   out="$(COLUMNS=400 hermes_run "$@" </dev/null 2>&1)"; printf '%s\n' "$out"
   out="$(printf '%s' "$out" | tr '\n' ' ' | tr -s ' ')"
+  HVERDICT="$(grep -oiE 'Verdict: (SAFE|CAUTION|DANGEROUS)' <<<"$out" | head -n1 | awk '{print tolower($2)}' || true)"
+  HRATE=0; grep -qiE 'rate limit' <<<"$out" && HRATE=1
   if grep -qi 'Installation blocked' <<<"$out" && grep -qiE 'dangerous verdict|Verdict: DANGEROUS' <<<"$out"; then
     HRESULT=dangerous
   elif grep -qi 'Installation blocked' <<<"$out" && grep -qiE 'caution verdict|Verdict: CAUTION' <<<"$out"; then
@@ -167,26 +171,28 @@ if [ "$HERMES" = 1 ]; then
     method=""
     if [ "$HCLI" = 1 ]; then
       args=(skills install "$HUB_ID" --category "$CATEGORY" --yes)
-      hub_installed && args+=(--force)    # reinstall over an existing hub install
+      # One attempt with --force: Hermes' scanner rates this skill CAUTION (it documents sudo/system
+      # commands), and --force never overrides a DANGEROUS verdict, so a first try without it adds no
+      # safety and doubles the GitHub API calls (60/hour without a token).
+      { [ "$NO_FORCE" = 0 ] || hub_installed; } && args+=(--force)
       echo "Hermes: $(hermes_cmd "${args[@]}")"
       if [ "$DRY" = 1 ]; then
         echo "  (dry-run) $(hermes_cmd "${args[@]}")"
-        [ "$NO_FORCE" = 0 ] && echo "  (dry-run) if Hermes' scanner blocks it with a CAUTION verdict: the same command with --force"
         echo "  (dry-run) if Hermes' scanner says DANGEROUS: stop, nothing is copied"
+        [ "$NO_FORCE" = 1 ] && echo "  (dry-run) if it blocks a CAUTION verdict (no --force): copy to $HDEST"
         echo "  (dry-run) if it fails for another reason (rate limit, offline, older Hermes): copy to $HDEST"
         method="dry-run"
       else
         # remove an older local copy so the hub install doesn't collide with it
         while IFS= read -r d; do if is_ours "$d" && ! hub_installed; then rm -rf -- "$d"; fi; done < <(hermes_copies)
         hermes_install "${args[@]}"
-        if [ "$HRESULT" = caution ] && [ "$NO_FORCE" = 0 ]; then
-          echo "Hermes: the scanner rated it CAUTION because this network-admin skill documents sudo and other"
-          echo "        system commands (it never runs them). Retrying with --force. Review it any time with:"
-          echo "        hermes skills inspect $HUB_ID"
-          hermes_install "${args[@]}" --force
-        fi
         case "$HRESULT" in
-          ok) method="hub" ;;
+          ok) method="hub"
+            if [ "$HVERDICT" = caution ]; then
+              echo "Hermes: the scanner rated it CAUTION because this network-admin skill documents sudo and other"
+              echo "        system commands (it never runs them); installed with --force. Review it any time with:"
+              echo "        hermes skills inspect $HUB_ID"
+            fi ;;
           dangerous)
             echo "Hermes: the scanner rated it DANGEROUS, so it was NOT installed for Hermes (nothing was copied)." >&2
             echo "        Please open an issue with the output above: https://github.com/$REPO/issues" >&2
@@ -194,8 +200,13 @@ if [ "$HERMES" = 1 ]; then
           caution)
             echo "Hermes: blocked by the scanner (CAUTION) and --no-force was given; copying instead." ;;
           *)
-            echo "Hermes: 'hermes skills install' did not complete (rate limit, offline or older Hermes?)."
-            echo "        If it was a GitHub rate limit, add GITHUB_TOKEN=<token> to $HH/.env. Copying instead." ;;
+            if [ "$HRATE" = 1 ]; then
+              echo "Hermes: GitHub's API rate limit was hit (60 requests/hour without a token); it resets within an hour."
+            else
+              echo "Hermes: 'hermes skills install' did not complete (offline, or an older Hermes?)."
+            fi
+            echo "        Copying instead. To switch the copy to an updatable hub install later, re-run this"
+            echo "        installer (after the limit resets, or after adding GITHUB_TOKEN=<token> to $HH/.env)." ;;
         esac
       fi
     fi
