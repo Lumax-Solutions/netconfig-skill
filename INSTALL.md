@@ -38,7 +38,9 @@ npx skills add https://github.com/Lumax-Solutions/netconfig-skill/tree/main/skil
 ### Option B: our install script (no Node.js needed)
 
 It downloads the latest version and copies it into the shared `~/.agents/skills/` folder plus the
-private folder of each agent it finds (Claude Code, Antigravity, Cline, Kiro, Trae, Hermes, Continue).
+private folder of each agent it finds (Claude Code, Antigravity, Cline, Kiro, Trae, Continue). If it
+finds Hermes Agent it installs there too, with `hermes skills install` when possible (see
+[Hermes Agent](#hermes-agent)).
 
 **Windows (PowerShell):**
 ```powershell
@@ -51,7 +53,8 @@ curl -fsSL https://raw.githubusercontent.com/Lumax-Solutions/netconfig-skill/mai
 ```
 
 Options: `--project` / `-Project` (current project only), `--uninstall` / `-Uninstall`,
-`--dry-run` / `-DryRun`. With options on Windows, download the script first:
+`--dry-run` / `-DryRun`, `--hermes-profile <name>` / `-HermesProfile <name>`,
+`--no-hermes-cli` / `-NoHermesCli` (copy into Hermes instead of using `hermes skills install`). With options on Windows, download the script first:
 `irm .../install.ps1 -OutFile install.ps1; .\install.ps1 -DryRun`. As with any script you pipe
 into a shell, you can [read it first](install.ps1).
 
@@ -91,7 +94,10 @@ Steps:
      Kilo Code:           ~/.kilo/skills/network-config
      Kiro:                ~/.kiro/skills/network-config
      OpenCode:            ~/.config/opencode/skills/network-config
-     Hermes Agent:        ~/.hermes/skills/network-config
+     Hermes Agent:        $HERMES_HOME/skills/networking/network-config — if HERMES_HOME is not set:
+                          ~/.hermes/skills/... (macOS/Linux/WSL), %LOCALAPPDATA%\hermes\skills\... (Windows).
+                          If the `hermes` command works, prefer: hermes skills install
+                          Lumax-Solutions/netconfig-skill/skills/network-config --category networking --force
      Trae:                ~/.trae/skills/network-config
      Qwen Code:           ~/.qwen/skills/network-config
      Factory Droid:       ~/.factory/skills/network-config
@@ -110,7 +116,7 @@ Steps:
 | **Claude Code** | `/plugin marketplace add Lumax-Solutions/netconfig-skill` then `/plugin install netconfig@netconfig-skill` |
 | **Codex** | `$skill-installer install https://github.com/Lumax-Solutions/netconfig-skill/tree/main/skills/network-config` |
 | **Gemini CLI** | `Run: gemini skills install https://github.com/Lumax-Solutions/netconfig-skill.git --path skills/network-config --scope user --consent` |
-| **Hermes Agent** | `Run: hermes skills install Lumax-Solutions/netconfig-skill/skills/network-config` |
+| **Hermes Agent** | In the chat: `/skills install Lumax-Solutions/netconfig-skill/skills/network-config --category networking --force` (see [Hermes Agent](#hermes-agent) for why `--force`) |
 | **Any agent with Node.js** | `Run: npx skills add https://github.com/Lumax-Solutions/netconfig-skill/tree/main/skills/network-config -g -y` and install it for yourself |
 
 > **Can’t install by prompt:** Claude apps (claude.ai / Claude Desktop chat), Cursor Cloud Agents
@@ -139,7 +145,7 @@ Steps:
 | **Kilo Code** | `~/.kilo/skills/` or `~/.agents/skills/` | `.kilo/skills/` or `.agents/skills/` | Copy the folder |
 | **Kiro** | `~/.kiro/skills/` | `.kiro/skills/` | IDE: *Agent Steering & Skills → + → Import a skill → GitHub* → paste `https://github.com/Lumax-Solutions/netconfig-skill/tree/main/skills/network-config` |
 | **OpenCode** | `~/.config/opencode/skills/` | `.opencode/skills/` | Copy the folder |
-| **Hermes Agent** | `~/.hermes/skills/` | `.hermes/skills/` (then `hermes skills trust`) | `hermes skills install Lumax-Solutions/netconfig-skill/skills/network-config` |
+| **Hermes Agent** | `~/.hermes/skills/` (Windows: `%LOCALAPPDATA%\hermes\skills\`; or `$HERMES_HOME/skills/`) | `.hermes/skills/` or `.agents/skills/`, after `hermes skills trust` in the repo (see [Hermes Agent](#hermes-agent)) | `hermes skills install Lumax-Solutions/netconfig-skill/skills/network-config --category networking --force` — see [Hermes Agent](#hermes-agent) |
 | **Goose** | `~/.agents/skills/` | `.agents/skills/` | Copy the folder |
 | **Amp** | `~/.config/agents/skills/` or `~/.agents/skills/` | `.agents/skills/` | `amp skill add` |
 | **Trae** | `~/.trae/skills/` (Trae CN: `~/.trae-cn/skills/`) | `.trae/skills/` | Copy the folder |
@@ -151,6 +157,78 @@ Steps:
 [the ZIP](https://github.com/Lumax-Solutions/netconfig-skill/archive/refs/heads/main.zip), unzip it,
 and copy `skills/network-config` into the folder from the table, so you end up with
 `<skills folder>/network-config/SKILL.md`.
+
+### Hermes Agent
+
+[Hermes Agent](https://hermes-agent.nousresearch.com/docs/user-guide/features/skills) keeps skills in
+its own folder and does **not** read `~/.agents/skills/` unless you add it (see the end of this
+section).
+
+**Recommended: install from GitHub with Hermes** (Hermes records where it came from, so
+`hermes skills update` works):
+
+```bash
+hermes skills install Lumax-Solutions/netconfig-skill/skills/network-config --category networking --force
+```
+
+- **Why `--force`:** Hermes scans every skill from GitHub before installing. This skill's Linux
+  examples contain `sudo` commands (`sudo ufw …`, `sudo nft …`), which the scanner rates
+  *caution*, and Hermes blocks *caution* skills from community sources unless you pass `--force`.
+  Nothing in the skill runs by itself: it's documentation that the model reads. To see the scan
+  and the files before deciding, run
+  `hermes skills inspect Lumax-Solutions/netconfig-skill/skills/network-config`.
+- **From inside a Hermes chat:** `/skills install Lumax-Solutions/netconfig-skill/skills/network-config --category networking --force`
+- **As a tap** (adds this repo as a skill source, then install by short name):
+  ```bash
+  hermes skills tap add Lumax-Solutions/netconfig-skill
+  hermes skills install Lumax-Solutions/netconfig-skill/network-config --category networking --force
+  ```
+- **Rate limit:** Hermes uses the GitHub API, which allows 60 requests an hour without a login. If
+  the install fails with a rate-limit error, put `GITHUB_TOKEN=<your token>` in `$HERMES_HOME/.env`
+  (default `~/.hermes/.env`, or `%LOCALAPPDATA%\hermes\.env` on Windows) and try again.
+- **Profiles:** each profile has its own skills folder (`$HERMES_HOME/profiles/<name>/skills`).
+  Install into one with `hermes -p <profile> skills install … --category networking --force`.
+- **Check:** start a new session (or `/reset`), then `hermes skills list` should show
+  `network-config` in category `networking`.
+- **Update:** `hermes skills update network-config`. **Remove:** `hermes skills uninstall network-config`.
+
+**Or use our install script** (Option B above). It finds the Hermes home folder and, if the
+`hermes` command works, runs `hermes skills install … --category networking --yes`:
+
+- If Hermes' scanner blocks it with a **caution** verdict (expected, see above), the script says
+  why in one line, points you to `hermes skills inspect`, and retries with `--force`. Add
+  `--no-force` / `-NoForce` to skip that retry; the skill is then copied instead.
+- If the scanner says **dangerous**, the script stops with an error and installs nothing for
+  Hermes: please [open an issue](https://github.com/Lumax-Solutions/netconfig-skill/issues).
+- For other failures (rate limit, offline, older Hermes) and when the `hermes` command isn't found,
+  it copies the skill to `<Hermes home>/skills/networking/network-config` (without `evals/`).
+  A copied skill is a *local* skill: `hermes skills update` won't update it, so re-run the script.
+
+Add `--hermes-profile <name>` / `-HermesProfile <name>` for a profile; `--dry-run` / `-DryRun`
+shows the exact command and path first.
+
+**Where Hermes keeps skills:** `$HERMES_HOME/skills/`. If `HERMES_HOME` isn't set:
+`~/.hermes/skills/` on macOS, Linux and WSL, and **`%LOCALAPPDATA%\hermes\skills\` on native
+Windows** (not `%USERPROFILE%\.hermes`). Skills can sit one level down in a category folder, so
+both `skills/network-config/` and `skills/networking/network-config/` work. Older versions of our
+script copied the skill to `%USERPROFILE%\.hermes\skills\network-config` on Windows, where
+Hermes doesn't look; `-Uninstall` removes that copy.
+
+**Project skills (for a team repo):** per the Hermes docs, Hermes also loads skills committed to
+a repo in `<repo>/.hermes/skills/` or `<repo>/.agents/skills/`, but only after you trust that
+repo: run `hermes skills trust` inside the checkout (or `hermes skills trust <path>`), and
+`hermes skills untrust` to revoke. Trust is per project; it isn't needed for taps or for skills
+installed with `hermes skills install`. The command isn't in hermes-agent 0.19.0 (the latest on
+PyPI in November 2026), so check `hermes skills --help` for it on your version.
+
+**Prefer one shared folder?** Hermes can also read `~/.agents/skills/` (where the install script
+puts the skill for other agents) if you add it to `config.yaml`:
+
+```yaml
+skills:
+  external_dirs:
+    - ~/.agents/skills
+```
 
 ### Agents without skill support
 
@@ -177,6 +255,8 @@ python scripts/build_agents_md.py --only fortigate,cisco-ios --out my-network-pr
 
 - `npx skills update` / `npx skills remove network-config -g` if you used the `skills` CLI.
 - Re-run the install script to update; add `--uninstall` / `-Uninstall` to remove.
+- Hermes: `hermes skills update network-config` / `hermes skills uninstall network-config` if
+  installed with `hermes skills install`; copies made by the script are removed by `--uninstall`.
 - Manual installs: replace or delete the `network-config` folder.
 
 ## Troubleshooting
@@ -185,7 +265,10 @@ python scripts/build_agents_md.py --only fortigate,cisco-ios --out my-network-pr
 |---|---|
 | Skill not listed | Check the path ends in `network-config/SKILL.md` (not `network-config/network-config/…` or `skills/network-config/skills/…`). Restart the agent. |
 | Agent lists it twice | Some agents read both `~/.agents/skills/` and their own folder. Harmless; delete one copy if it bothers you. |
-| Project skill ignored (Hermes, some IDEs) | Project-level skills may need to be trusted first, e.g. `hermes skills trust`. |
+| Hermes: "Installation blocked … caution verdict" | Expected: the scanner flags the `sudo` examples. Review with `hermes skills inspect …`, then add `--force` (see [Hermes Agent](#hermes-agent)). |
+| Hermes: rate-limit error | Add `GITHUB_TOKEN=<token>` to `$HERMES_HOME/.env` and retry. |
+| Hermes ignores a skill committed to a repo | Project skills load only from a trusted repo: run `hermes skills trust` in the checkout (see [Hermes Agent](#hermes-agent)). |
+| Hermes doesn't list it | It doesn't read `~/.agents/skills/`. Check `<Hermes home>/skills/networking/network-config/SKILL.md` exists (Windows: under `%LOCALAPPDATA%\hermes`), then start a new session. |
 | Claude app upload rejected | The ZIP must contain the `network-config` folder at its top level, and *Code execution* must be on in settings. |
 | Corporate proxy blocks downloads | Download the ZIP in your browser and copy the folder manually. |
 | Agent can’t run the install prompt | It has no shell or file access (cloud/sandboxed). Use option 1 or 3 on your own computer. |

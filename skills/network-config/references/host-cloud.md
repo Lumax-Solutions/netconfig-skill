@@ -49,8 +49,11 @@ iptables -A INPUT -i lo -j ACCEPT
 iptables -A INPUT -p tcp -s 10.0.99.0/24 --dport 22 -j ACCEPT
 iptables -A INPUT -p tcp -m multiport --dports 80,443 -j ACCEPT
 iptables -P INPUT DROP
-iptables-save > /etc/iptables/rules.v4
+netfilter-persistent save
 ```
+To keep the rules after a reboot, `netfilter-persistent save` (Debian/Ubuntu, package
+`iptables-persistent`) writes `/etc/iptables/rules.v4` and `rules.v6`; on RHEL-family systems with
+`iptables-services`, use `service iptables save`.
 Adding the allow rules before the DROP policy reduces the risk of cutting off your own SSH session, but existing rules (an earlier DROP/REJECT, or a different source address than you expect) can still block it — check `iptables -S` first.
 Over SSH, arm a rollback before pasting: `iptables-save > /root/fw.bak` and
 `(sleep 300 && iptables-restore < /root/fw.bak) &`, then kill that job once a new session works.

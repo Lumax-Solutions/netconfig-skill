@@ -3,9 +3,54 @@
 All notable changes to this skill. Versions follow [SemVer](https://semver.org/):
 MAJOR = structure/behaviour change, MINOR = new platform or section, PATCH = corrections.
 
-## [Unreleased]
+## [1.4.1] — 2026-11-09
+
+Theme: first-class Hermes Agent support.
+
+### Added
+- **Hermes Agent in the install scripts** (`install.sh`, `install.ps1`):
+  - Finds the Hermes home as `$HERMES_HOME`, else `%LOCALAPPDATA%\hermes` on native Windows (a
+    legacy `%USERPROFILE%\.hermes` only if it has a `config.yaml`), else `~/.hermes`
+    (macOS, Linux, WSL). Detects Hermes when that folder exists or `hermes` is on PATH.
+  - Runs `hermes skills install Lumax-Solutions/netconfig-skill/skills/network-config --category
+    networking --yes`, so `hermes skills update` works, and reads the result (Hermes can exit 0
+    without installing). A scanner **caution** block is explained in one line and retried with
+    `--force`; a **dangerous** verdict stops the script with an error and nothing is copied; other
+    failures (rate limit, offline, older Hermes) fall back to copying the skill to
+    `<Hermes home>/skills/networking/network-config` without `evals/`.
+  - New options: `--hermes-profile` / `-HermesProfile`, `--no-force` / `-NoForce` (no forced
+    retry; copy instead), `--no-hermes-cli` / `-NoHermesCli`,
+    `--source` / `-Source` (install from a local checkout). `--uninstall` uses
+    `hermes skills uninstall` for hub installs and also removes the copy that older versions put in
+    `%USERPROFILE%\.hermes\skills` on Windows. `--dry-run` shows the exact command and path.
+- **SKILL.md metadata for Hermes:** `metadata.author`, `metadata.hermes.category: networking` and
+  `metadata.hermes.tags`. Kept under `metadata` because the Agent Skills spec (and its `skills-ref`
+  validator) rejects extra top-level keys such as `author`; `scripts/validate.py` now enforces that
+  and checks that SKILL.md and `plugin.json` versions match.
+- **INSTALL.md "Hermes Agent" section:** one-liner, tap, `/skills install` in a chat, the
+  `GITHUB_TOKEN` rate-limit fix, profiles, update/uninstall, the Windows path, and
+  `skills.external_dirs` for people who prefer `~/.agents/skills`. README: Hermes one-liner.
+- **CI job "Hermes Agent install":** 95 offline installer checks for both scripts (a stub `hermes` covers caution, dangerous and
+  rate-limit results) (pwsh on Ubuntu,
+  Windows paths simulated), the real Hermes 0.19.0 CLI listing the copied skill in category
+  `networking`, Hermes' security scanner run on the whole skill folder, `evals/` included (the job fails on *dangerous*; *caution* is expected), and on `main`
+  a real `hermes skills install … --force` from GitHub, `hermes skills list` and uninstall.
+
+### Changed
+- `references/host-cloud.md` and `ipv6.md`: persist iptables rules with `netfilter-persistent save`
+  (Debian/Ubuntu; RHEL: `service iptables save`) instead of `iptables-save > /etc/iptables/rules.v4`.
+  Same result; Hermes' scanner rated the redirect into `/etc` *critical*, which blocks installation
+  even with `--force`.
 
 ### Fixed
+- An eval grader (`mikrotik-vlan-guest/graders/09-check.md`) was worded "do not tell the user to
+  reconnect via MAC-winbox…", which Hermes' scanner flags as *critical* (deception), making the
+  full skill folder *dangerous*. Reworded to "they must not rely on reconnecting via MAC-winbox…";
+  the grader checks the same thing.
+- Hermes paths in INSTALL.md: the old table pointed Windows users to `%USERPROFILE%\.hermes`.
+  `hermes skills trust` is now documented for what it does (trusting a repo so its own
+  `.hermes/skills/` / `.agents/skills/` load), not as an install step. The scripts no longer claim
+  Hermes reads `~/.agents/skills`.
 - `dist/AGENTS.md` still told the model to "read the reference file(s)" although every reference
   is included inline: the build's text replacement stopped matching after the SKILL.md wording
   changed in 1.3.0. The build now matches across line breaks, also rewrites the "syntax lives in

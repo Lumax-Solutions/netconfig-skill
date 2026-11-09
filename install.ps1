@@ -4,73 +4,236 @@
 #
 # With options, download first:
 #   irm https://raw.githubusercontent.com/Lumax-Solutions/netconfig-skill/main/install.ps1 -OutFile install.ps1
-#   .\install.ps1 -Project      # install into the current project (.agents\skills, .claude\skills)
-#   .\install.ps1 -Uninstall    # remove from every location this script manages
-#   .\install.ps1 -DryRun       # show what would happen
+#   .\install.ps1 -Project               # install into the current project (.agents\skills, .claude\skills)
+#   .\install.ps1 -Uninstall             # remove from every location this script manages
+#   .\install.ps1 -DryRun                # show the exact paths and commands, change nothing
+#   .\install.ps1 -HermesProfile work    # install into / remove from that Hermes profile
+#   .\install.ps1 -NoHermesCli           # for Hermes, copy the folder even if `hermes` is available
+#   .\install.ps1 -NoForce               # if Hermes' scanner blocks it (CAUTION), copy instead of retrying with --force
+#   .\install.ps1 -Source C:\path\repo   # use a local checkout instead of downloading
 #
 # Installs skills\network-config into %USERPROFILE%\.agents\skills (shared folder read by Codex, Cursor,
 # Copilot, Gemini CLI, OpenCode, Goose, Amp, Kilo, Roo, Qwen, Droid, Windsurf/Devin and others), plus the
 # private folder of each of these agents you have installed: Claude Code, Antigravity, Cline, Kiro, Trae,
-# Hermes, Continue.
-param([switch]$Project, [switch]$Uninstall, [switch]$DryRun)
+# Continue.
+# Hermes Agent does NOT read ~\.agents\skills by default. If Hermes is installed (its home folder exists or
+# `hermes` is on PATH) the skill is installed with `hermes skills install ... --category networking`, so
+# `hermes skills update` works. Hermes' scanner rates this skill CAUTION (it documents sudo/system commands),
+# so a CAUTION block is retried with --force; a DANGEROUS verdict stops the script and nothing is copied.
+# Other failures (rate limit, offline, older Hermes) fall back to copying the folder to
+# <hermes-home>\skills\networking\network-config.
+# Hermes home = $env:HERMES_HOME, else %LOCALAPPDATA%\hermes on Windows (a legacy %USERPROFILE%\.hermes is
+# used only if it has a config.yaml and %LOCALAPPDATA%\hermes doesn't exist), else ~/.hermes elsewhere.
+param([switch]$Project, [switch]$Uninstall, [switch]$DryRun, [string]$HermesProfile = '',
+      [switch]$NoHermesCli, [switch]$NoForce, [string]$Source = '')
 $ErrorActionPreference = 'Stop'
+$script:HermesAbort = $false
 $Repo = 'Lumax-Solutions/netconfig-skill'; $Branch = 'main'; $Name = 'network-config'
+$HubId = "$Repo/skills/$Name"; $Category = 'networking'
 
+function J { $p = $args[0]; foreach ($x in $args[1..($args.Count)]) { if ($x) { $p = [IO.Path]::Combine($p, $x) } }; $p }
+function Test-Ours($d) {
+    $f = J $d 'SKILL.md'
+    (Test-Path $f) -and ((Get-Content -Raw $f) -match "(?m)^name: $Name\s*$")
+}
+
+$OnWindows = ($PSVersionTable.PSEdition -eq 'Desktop') -or $IsWindows -or ($env:NETCONFIG_TEST_WINDOWS -eq '1')
+$H = $env:USERPROFILE; if (-not $H) { $H = $HOME }
+
+# ---------------------------------------------------------------- Hermes location
+if ($env:HERMES_HOME) { $HH = $env:HERMES_HOME }
+elseif ($OnWindows) {
+    $la = $env:LOCALAPPDATA; if (-not $la) { $la = J $H 'AppData' 'Local' }
+    $HH = J $la 'hermes'
+    $legacy = J $H '.hermes'
+    if (-not (Test-Path $HH) -and (Test-Path (J $legacy 'config.yaml'))) { $HH = $legacy }
+} else { $HH = J $H '.hermes' }
+if ($HermesProfile) { $HSK = J $HH 'profiles' $HermesProfile 'skills' } else { $HSK = J $HH 'skills' }
+$HDest = J $HSK $Category $Name
+$HCli = (-not $NoHermesCli) -and [bool](Get-Command hermes -ErrorAction SilentlyContinue)
+$Hermes = (-not $Project) -and ((Test-Path $HH) -or $HCli)
+$HPrefix = @(); if ($HermesProfile) { $HPrefix = @('-p', $HermesProfile) }
+function Show-Hermes { 'hermes ' + (($HPrefix + $args) -join ' ') }
+function Test-HubInstalled {
+    $lock = J $HSK '.hub' 'lock.json'
+    (Test-Path $lock) -and ((Get-Content -Raw $lock) -match "`"$Name`"")
+}
+# Run `hermes skills install`, show its output, return ok | caution | dangerous | failed.
+# Hermes can exit 0 when it didn't install, so read the result instead of the exit code.
+function Invoke-HermesInstall($hargs) {
+    $old = $env:COLUMNS; $env:COLUMNS = '400'
+    try { $out = (& hermes @HPrefix @hargs 2>&1 | Out-String) } catch { $out = "$_" } finally { $env:COLUMNS = $old }
+    Write-Host $out
+    $flat = ($out -replace '\s+', ' ')
+    $blocked = $flat -match 'Installation blocked'
+    if ($blocked -and ($flat -match 'dangerous verdict|Verdict: DANGEROUS')) { return 'dangerous' }
+    if ($blocked -and ($flat -match 'caution verdict|Verdict: CAUTION')) { return 'caution' }
+    $found = Get-ChildItem -Path $HSK -Filter 'SKILL.md' -Recurse -Depth 3 -ErrorAction SilentlyContinue |
+        Where-Object { $_.Directory.Name -eq $Name }
+    if (-not ($flat -match 'Installation blocked|rate limit|(^|\s)Error:?\s') -and (Test-HubInstalled) -and $found) { return 'ok' }
+    return 'failed'
+}
+function Get-HermesCopies {
+    $c = @((J $HSK $Category $Name), (J $HSK $Name))
+    $old = J $H '.hermes'
+    if ($OnWindows -and ($HH -ne $old)) { $c += (J $old 'skills' $Name) }   # old wrong path
+    $c
+}
+
+# ---------------------------------------------------------------- other agents
 $targets = @()
 if ($Project) {
-    $targets += (Join-Path $PWD '.agents\skills'), (Join-Path $PWD '.claude\skills')
+    $targets += (J $PWD.Path '.agents' 'skills'), (J $PWD.Path '.claude' 'skills')
 } else {
-    $H = $env:USERPROFILE
-    $targets += (Join-Path $H '.agents\skills')
+    $targets += (J $H '.agents' 'skills')
     $map = [ordered]@{
-        '.claude'   = '.claude\skills'
-        '.gemini'   = '.gemini\config\skills'   # Google Antigravity
-        '.cline'    = '.cline\skills'
-        '.kiro'     = '.kiro\skills'
-        '.trae'     = '.trae\skills'
-        '.trae-cn'  = '.trae-cn\skills'
-        '.hermes'   = '.hermes\skills'
-        '.continue' = '.continue\skills'
+        '.claude'   = @('.claude', 'skills')
+        '.gemini'   = @('.gemini', 'config', 'skills')   # Google Antigravity
+        '.cline'    = @('.cline', 'skills')
+        '.kiro'     = @('.kiro', 'skills')
+        '.trae'     = @('.trae', 'skills')
+        '.trae-cn'  = @('.trae-cn', 'skills')
+        '.continue' = @('.continue', 'skills')
     }
-    foreach ($k in $map.Keys) { if (Test-Path (Join-Path $H $k)) { $targets += (Join-Path $H $map[$k]) } }
+    foreach ($k in $map.Keys) { if (Test-Path (J $H $k)) { $targets += (J $H @($map[$k])[0] @($map[$k])[1] @($map[$k])[2]) } }
 }
 
 if ($Uninstall) {
     foreach ($t in $targets) {
-        $d = Join-Path $t $Name
-        if (Test-Path (Join-Path $d 'SKILL.md')) {
+        $d = J $t $Name
+        if (Test-Path (J $d 'SKILL.md')) {
             Write-Host "Removing $d"
             if (-not $DryRun) { Remove-Item -Recurse -Force $d }
         }
     }
+    if ($Hermes) {
+        if ($HCli -and (Test-HubInstalled)) {
+            $cmd = Show-Hermes 'skills' 'uninstall' $Name
+            Write-Host "Hermes: $cmd"
+            if ($DryRun) { Write-Host "  (dry-run) 'y' | $cmd" }
+            else { try { 'y' | & hermes @HPrefix skills uninstall $Name } catch { Write-Host $_ } }
+        }
+        foreach ($d in Get-HermesCopies) {
+            if (Test-Ours $d) { Write-Host "Removing $d"; if (-not $DryRun) { Remove-Item -Recurse -Force $d } }
+        }
+        if (-not $DryRun -and (Test-HubInstalled)) {
+            Write-Host "Hermes still lists $Name as hub-installed; run: $(Show-Hermes 'skills' 'uninstall' $Name)"
+        }
+        Write-Host 'Hermes: start a new session (or /reset) for the change to take effect.'
+    }
     Write-Host 'Done.'; return
 }
 
-$tmp = Join-Path ([IO.Path]::GetTempPath()) ("netconfig-" + [guid]::NewGuid())
+# ---------------------------------------------------------------- get the skill
+$tmp = J ([IO.Path]::GetTempPath()) ("netconfig-" + [guid]::NewGuid())
 New-Item -ItemType Directory -Path $tmp | Out-Null
 try {
-    Write-Host "Downloading $Repo ($Branch)..."
-    $zip = Join-Path $tmp 'repo.zip'
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/$Repo/archive/refs/heads/$Branch.zip" -OutFile $zip
-    Expand-Archive -Path $zip -DestinationPath $tmp -Force
-    $src = Get-ChildItem -Path $tmp -Directory -Recurse -Depth 3 |
-        Where-Object { $_.Name -eq $Name -and $_.Parent.Name -eq 'skills' } | Select-Object -First 1
-    if (-not $src -or -not (Test-Path (Join-Path $src.FullName 'SKILL.md'))) { throw "Could not find skills\$Name\SKILL.md in the download." }
+    if ($Source) {
+        if (Test-Path (J $Source 'SKILL.md')) { $srcPath = (Resolve-Path $Source).Path }
+        else { $srcPath = J (Resolve-Path $Source).Path 'skills' $Name }
+    } else {
+        Write-Host "Downloading $Repo ($Branch)..."
+        $zip = J $tmp 'repo.zip'
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/$Repo/archive/refs/heads/$Branch.zip" -OutFile $zip
+        Expand-Archive -Path $zip -DestinationPath $tmp -Force
+        $src = Get-ChildItem -Path $tmp -Directory -Recurse -Depth 3 |
+            Where-Object { $_.Name -eq $Name -and $_.Parent.Name -eq 'skills' } | Select-Object -First 1
+        $srcPath = if ($src) { $src.FullName } else { '' }
+    }
+    if (-not $srcPath -or -not (Test-Path (J $srcPath 'SKILL.md'))) { throw "Could not find skills\$Name\SKILL.md." }
+
+    function Copy-Skill($dest) {
+        if ($DryRun) { Write-Host "  (dry-run) copy $srcPath -> $dest (without evals)"; return }
+        New-Item -ItemType Directory -Force -Path (Split-Path $dest -Parent) | Out-Null
+        if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
+        Copy-Item -Recurse -Path $srcPath -Destination $dest
+        $ev = J $dest 'evals'
+        if (Test-Path $ev) { Remove-Item -Recurse -Force $ev }   # test cases are not needed at runtime
+    }
 
     foreach ($t in $targets) {
-        $dest = Join-Path $t $Name
+        $dest = J $t $Name
         Write-Host "Installing into $dest"
-        if ($DryRun) { continue }
-        New-Item -ItemType Directory -Force -Path $t | Out-Null
-        if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
-        Copy-Item -Recurse -Path $src.FullName -Destination $dest
-        $ev = Join-Path $dest 'evals'
-        if (Test-Path $ev) { Remove-Item -Recurse -Force $ev }
+        Copy-Skill $dest
     }
+
+    # ------------------------------------------------------------ Hermes
+    $HMsg = ''
+    if ($Hermes) {
+        if ($HermesProfile -and -not (Test-Path (J $HH 'profiles' $HermesProfile)) -and -not $DryRun -and -not $HCli) {
+            Write-Warning "Hermes profile '$HermesProfile' not found at $(J $HH 'profiles' $HermesProfile); skipping Hermes."
+        } else {
+            $method = ''
+            if ($HCli) {
+                $hargs = @('skills', 'install', $HubId, '--category', $Category, '--yes')
+                if (Test-HubInstalled) { $hargs += '--force' }   # reinstall over an existing hub install
+                $cmd = Show-Hermes @hargs
+                Write-Host "Hermes: $cmd"
+                if ($DryRun) {
+                    Write-Host "  (dry-run) $cmd"
+                    if (-not $NoForce) { Write-Host "  (dry-run) if Hermes' scanner blocks it with a CAUTION verdict: the same command with --force" }
+                    Write-Host "  (dry-run) if Hermes' scanner says DANGEROUS: stop, nothing is copied"
+                    Write-Host "  (dry-run) if it fails for another reason (rate limit, offline, older Hermes): copy to $HDest"
+                    $method = 'dry-run'
+                } else {
+                    # remove an older local copy so the hub install doesn't collide with it
+                    if (-not (Test-HubInstalled)) { foreach ($d in Get-HermesCopies) { if (Test-Ours $d) { Remove-Item -Recurse -Force $d } } }
+                    $r = Invoke-HermesInstall $hargs
+                    if (($r -eq 'caution') -and -not $NoForce) {
+                        Write-Host "Hermes: the scanner rated it CAUTION because this network-admin skill documents sudo and other"
+                        Write-Host "        system commands (it never runs them). Retrying with --force. Review it any time with:"
+                        Write-Host "        hermes skills inspect $HubId"
+                        $r = Invoke-HermesInstall ($hargs + '--force')
+                    }
+                    switch ($r) {
+                        'ok'        { $method = 'hub' }
+                        'dangerous' {
+                            Write-Host "Hermes: the scanner rated it DANGEROUS, so it was NOT installed for Hermes (nothing was copied)." -ForegroundColor Red
+                            Write-Host "        Please open an issue with the output above: https://github.com/$Repo/issues" -ForegroundColor Red
+                            $script:HermesAbort = $true
+                        }
+                        'caution'   { Write-Host "Hermes: blocked by the scanner (CAUTION) and -NoForce was given; copying instead." }
+                        default {
+                            Write-Host "Hermes: 'hermes skills install' did not complete (rate limit, offline or older Hermes?)."
+                            Write-Host "        If it was a GitHub rate limit, add GITHUB_TOKEN=<token> to $(J $HH '.env'). Copying instead."
+                        }
+                    }
+                }
+            }
+            if ($script:HermesAbort) { $method = 'abort' }
+            if (-not $method) {
+                Write-Host "Installing into $HDest"
+                foreach ($d in Get-HermesCopies) {
+                    if (($d -ne $HDest) -and (Test-Ours $d)) {
+                        if ($DryRun) { Write-Host "  (dry-run) remove $d" } else { Remove-Item -Recurse -Force $d }
+                    }
+                }
+                Copy-Skill $HDest
+                $method = 'copy'
+            }
+            switch ($method) {
+                'hub'     { $HMsg = "Hermes: installed with 'hermes skills install' (update later with: $(Show-Hermes 'skills' 'update' $Name))." }
+                'copy'    { if ($DryRun) { $HMsg = "Hermes: would copy to $HDest." }
+                            else { $HMsg = "Hermes: copied to $HDest. A copied skill is 'local': 'hermes skills update' won't update it; re-run this installer instead." } }
+                'dry-run' { $HMsg = 'Hermes: would install as shown above.' }
+                'abort'   { $HMsg = '' }
+            }
+        }
+    }
+
+    $n = $targets.Count; if ($HMsg) { $n++ }
     Write-Host ''
-    Write-Host "Installed netconfig-skill into $($targets.Count) location(s). Restart your agent, then ask:"
+    Write-Host "Installed netconfig-skill into $n location(s). Restart your agent, then ask:"
     Write-Host '  "Which skills do you have? Use network-config to audit this Cisco config: ..."'
+    if ($HMsg) {
+        Write-Host $HMsg
+        Write-Host "Hermes: start a new session (or /reset) to load it; check with: $(Show-Hermes 'skills' 'list')"
+    }
 } finally {
     Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
+}
+if ($script:HermesAbort) {
+    # exit code 3 when run as a file; with `irm | iex` an exit would close the window, so throw instead
+    if ($PSCommandPath) { exit 3 } else { throw 'Hermes scanner verdict DANGEROUS: network-config was not installed for Hermes.' }
 }

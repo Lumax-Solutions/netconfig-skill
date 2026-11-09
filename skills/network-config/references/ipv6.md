@@ -137,7 +137,7 @@ removed — with IPv6 enabled and no rules, the router and LAN are reachable ove
 - **nftables:** use `table inet filter` so one ruleset covers both families, and allow ICMPv6:
   `meta l4proto ipv6-icmp accept` (already in the example in `host-cloud.md`).
 - **iptables:** every rule must be repeated with `ip6tables`, and saved separately
-  (`ip6tables-save > /etc/iptables/rules.v6`). Allow `-p ipv6-icmp`.
+  (`rules.v6`; `netfilter-persistent save` writes both files on Debian/Ubuntu). Allow `-p ipv6-icmp`.
 - **UFW:** `IPV6=yes` in `/etc/default/ufw` makes UFW rules apply to both families.
 - Check exposure: `ss -tlnp` shows services listening on `[::]`.
 

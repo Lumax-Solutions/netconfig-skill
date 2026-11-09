@@ -3,8 +3,24 @@ name: network-config
 description: Expert CLI configuration, review, troubleshooting and cross-vendor migration for routers, switches and firewalls — Cisco (IOS/IOS-XE, NX-OS, ASA, FTD), Fortinet FortiGate (FortiOS), Palo Alto (PAN-OS), Juniper (Junos/SRX/EX), MikroTik (RouterOS), Check Point (Gaia), Huawei (VRP/USG), Aruba/HPE (AOS-CX), Arista EOS, SonicWall, VyOS/EdgeOS, pfSense/OPNsense — plus host and cloud firewalls (UFW, nftables, iptables, Windows Firewall, AWS Security Groups/NACLs, Azure NSG, GCP firewall rules, Kubernetes NetworkPolicy). Use whenever the user pastes or asks for a device config, CLI commands, show/diagnose output, VLANs, routing (static/OSPF/BGP), ACLs, firewall policies, NAT, VPN/IPsec, HA, hardening, or wants to convert a config from one vendor to another — even if they don't name the vendor.
 license: MIT
 metadata:
-  version: "1.4.0"
+  version: "1.4.1"
   docs-verified: "2026-11"
+  author: Lumax Solutions
+  hermes:
+    category: networking
+    tags:
+      - networking
+      - network-configuration
+      - network-automation
+      - network-security
+      - firewall
+      - change-management
+      - ipv6
+      - cisco
+      - fortigate
+      - palo-alto
+      - juniper
+      - mikrotik
 ---
 
 # Network Device Configuration (multi-vendor)

@@ -2,7 +2,9 @@
 """Validate the network-config skill.
 
 Checks:
-  - SKILL.md has YAML frontmatter with `name` and `description`
+  - SKILL.md has YAML frontmatter with `name` and `description`, and only the top-level keys the
+    Agent Skills spec allows (client-specific fields such as Hermes' go under `metadata`)
+  - metadata.version matches .claude-plugin/plugin.json
   - name is kebab-case, <= 64 chars, matches the folder name
   - description is <= 1024 chars and has no angle brackets
   - every `references/*.md` path mentioned in SKILL.md exists, and every reference file is linked
@@ -52,6 +54,22 @@ if len(desc) > 1024:
     err(f"SKILL.md: description is {len(desc)} chars (max 1024)")
 if "<" in desc or ">" in desc:
     err("SKILL.md: description must not contain angle brackets")
+# Agent Skills spec (agentskills.io, skills-ref validator): only these top-level keys are allowed.
+SPEC_KEYS = {"name", "description", "license", "allowed-tools", "metadata", "compatibility"}
+extra = sorted(set(fm) - SPEC_KEYS)
+if extra:
+    err(f"SKILL.md: top-level frontmatter keys {extra} are not allowed by the Agent Skills spec "
+        "(validators reject them); put client-specific fields under `metadata:`")
+fm_block = re.match(r"^---\n(.*?)\n---\n", skill_md, re.S).group(1)
+skill_version = (re.search(r'(?m)^  version:\s*"?([^"\n]+)"?', fm_block) or [None, ""])[1]
+plugin = ROOT / ".claude-plugin" / "plugin.json"
+if plugin.is_file():
+    import json
+    pv = json.loads(plugin.read_text(encoding="utf-8")).get("version", "")
+    if pv != skill_version:
+        err(f"version mismatch: SKILL.md metadata.version {skill_version!r} vs plugin.json {pv!r}")
+if not re.search(r"(?m)^  hermes:\n    category: networking$", fm_block):
+    err("SKILL.md: metadata.hermes.category should be 'networking' (matches the installers)")
 
 linked = set(re.findall(r"references/([a-z0-9-]+\.md)", skill_md))
 present = {p.name for p in (SKILL / "references").glob("*.md")}

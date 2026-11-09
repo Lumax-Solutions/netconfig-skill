@@ -194,7 +194,7 @@ Antigravity, Gemini CLI, Windsurf, Cline, Roo, Kiro, OpenCode, Hermes and more):
 irm https://raw.githubusercontent.com/Lumax-Solutions/netconfig-skill/main/install.ps1 | iex
 ```
 ```bash
-# macOS / Linux
+# macOS / Linux / WSL
 curl -fsSL https://raw.githubusercontent.com/Lumax-Solutions/netconfig-skill/main/install.sh | bash
 # or, with Node.js, pick agents interactively:
 npx skills add https://github.com/Lumax-Solutions/netconfig-skill/tree/main/skills/network-config -g
@@ -211,6 +211,13 @@ and the agent installs the skill itself.
 /plugin marketplace add Lumax-Solutions/netconfig-skill
 /plugin install netconfig@netconfig-skill
 ```
+
+**Hermes Agent** — Windows, macOS, Linux or WSL (the install scripts above also detect Hermes):
+```bash
+hermes skills install Lumax-Solutions/netconfig-skill/skills/network-config --category networking --force
+```
+`--force` is needed because Hermes' scanner flags the `sudo` examples in the Linux reference;
+details, profiles and updates in [INSTALL.md](INSTALL.md#hermes-agent).
 
 **No agent? Use the desktop app** — [NetConfig Assistant](app/README.md): a guided app on your own
 computer for people new to networking, with local or cloud AI.
