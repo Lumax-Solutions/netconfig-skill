@@ -61,8 +61,17 @@ function Test-HubInstalled {
 # Run `hermes skills install`, show its output, return ok | caution | dangerous | failed.
 # Hermes can exit 0 when it didn't install, so read the result instead of the exit code.
 function Invoke-HermesInstall($hargs) {
+    # Hermes (Python) writes UTF-8. Windows PowerShell decodes captured output with the console code
+    # page (e.g. 1256 on Arabic Windows), which garbles its box and arrow characters, so switch the
+    # console to UTF-8 while it runs and put everything back afterwards.
     $old = $env:COLUMNS; $env:COLUMNS = '400'
-    try { $out = (& hermes @HPrefix @hargs 2>&1 | Out-String) } catch { $out = "$_" } finally { $env:COLUMNS = $old }
+    $oldPyEnc = $env:PYTHONIOENCODING; $env:PYTHONIOENCODING = 'utf-8'
+    $oldEnc = $null
+    try { $oldEnc = [Console]::OutputEncoding; [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding $false } catch { }
+    try { $out = (& hermes @HPrefix @hargs 2>&1 | Out-String) } catch { $out = "$_" } finally {
+        $env:COLUMNS = $old; $env:PYTHONIOENCODING = $oldPyEnc
+        if ($oldEnc) { try { [Console]::OutputEncoding = $oldEnc } catch { } }
+    }
     Write-Host $out
     $flat = ($out -replace '\s+', ' ')
     $script:HVerdict = ''

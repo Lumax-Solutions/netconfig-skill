@@ -3,6 +3,19 @@
 All notable changes to this skill. Versions follow [SemVer](https://semver.org/):
 MAJOR = structure/behaviour change, MINOR = new platform or section, PATCH = corrections.
 
+## [1.4.2] — 2026-11-15
+
+### Fixed
+- `install.ps1`: on Windows PowerShell 5.1 with a non-UTF-8 system code page (for example Arabic,
+  1256), Hermes' box-drawing and arrow characters were garbled in the installer's output
+  (`ظ¤ظ¤…`). The script now switches the console to UTF-8 and sets `PYTHONIOENCODING=utf-8` while
+  `hermes skills install` runs, and restores both afterwards. Display only: installs were not
+  affected. Found on a real Windows test, where v1.4.1 hub-installed correctly.
+- Installer tests: 112 checks (Hermes' UTF-8 output survives capture; `install.ps1` runs Hermes
+  with `PYTHONIOENCODING=utf-8`).
+
+The skill's content is unchanged from 1.4.1.
+
 ## [1.4.1] — 2026-11-09
 
 Theme: first-class Hermes Agent support.

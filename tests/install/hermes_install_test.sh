@@ -9,7 +9,7 @@
 # legacy Windows home / profile), the `hermes skills install` path with a stub hermes (one call with
 # --force; CAUTION -> hub install + note, DANGEROUS -> abort without copying, rate limit -> copy and a
 # later re-run switches to hub, --no-force -> no --force and a CAUTION block copies), uninstall (copy,
-# hub, old wrong Windows path).
+# hub, old wrong Windows path), and Hermes' UTF-8 output surviving capture.
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 PASS=0; FAIL=0
@@ -41,6 +41,7 @@ STUB="$(mktemp -d)"
 cat > "$STUB/hermes" <<'STUBEOF'
 #!/usr/bin/env bash
 echo "stub hermes $*" >> "$STUB_LOG"
+echo "stub encoding=${PYTHONIOENCODING:-unset}" >> "$STUB_LOG"
 home="${HERMES_HOME:-$HOME/.hermes}"
 if [ "$1" = "-p" ]; then home="$home/profiles/$2"; shift 2; fi
 sk="$home/skills"
@@ -55,6 +56,7 @@ case "$1 $2" in
                  echo "Installation blocked: Blocked (community source + dangerous verdict, 3 findings). --force does"
                  echo "not override a dangerous verdict."; exit 0 ;;
       caution)   echo "Scan: network-config (x/community)  Verdict: CAUTION"
+                 echo "┌── Upstream Metadata ──┐ sudo nft -c -f /etc/nftables.conf (check) → apply" 
                  # Hermes prints the policy decision even when --force then installs it
                  echo "Decision: BLOCKED — Blocked (community source + caution verdict, 16 findings). Use --force to override."
                  if [ "$force" = 0 ]; then
@@ -148,6 +150,8 @@ run_suite() {   # run_suite sh|ps
   check "$kind caution: ends as a hub install" has "$R" "installed with 'hermes skills install'"
   check "$kind caution: explains the verdict" has "$R" "rated it CAUTION"
   check "$kind caution: points to hermes skills inspect" has "$R" "hermes skills inspect Lumax-Solutions/netconfig-skill/skills/network-config"
+  check "$kind caution: Hermes' box/arrow characters come through intact" bash -c "grep -qF '┌── Upstream Metadata ──┐' <<<\"\$0\" && grep -qF '(check) → apply' <<<\"\$0\"" "$R"
+  [ "$kind" = ps ] && check "ps: hermes runs with PYTHONIOENCODING=utf-8" grep -q "stub encoding=utf-8" "$STUB_LOG"
   check "$kind caution: explanation comes after the install" bash -c "awk '/Installed: networking/{i=NR} /rated it CAUTION/{c=NR} END{exit !(i && c > i)}' <<<\"\$0\"" "$R"
   # CAUTION + --no-force -> one call without --force, copy
   fresh; export STUB_LOG="$T/stub.log"; HUBDIR="$T/hh/skills/networking/network-config"
