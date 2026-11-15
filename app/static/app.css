@@ -127,3 +127,16 @@ dialog::backdrop { background: rgba(0,0,0,.45); }
   h1 { font-size: 1.35rem; } .grid { grid-template-columns: 1fr 1fr; } .grid.tasks { grid-template-columns: 1fr; }
   .msg { padding: 12px 14px; }
 }
+
+.privacy { border: 1px solid var(--line); border-radius: 12px; padding: 10px 16px 4px; margin: 14px 0 4px; background: var(--panel); }
+.privacy legend { font-weight: 600; padding: 0 6px; }
+.privacy .inline-check { margin: 4px 0 6px; }
+.show-real { margin: 0 6px 0 0; }
+.followup-note { margin-inline-end: auto; align-self: center; }
+.redact table { border-collapse: collapse; margin-top: 6px; font-size: .82rem; }
+.redact td, .redact th { border: 1px solid var(--line); padding: 3px 8px; text-align: start; }
+.sent-view { margin-top: 8px; font-size: .82rem; }
+.sent-view pre { white-space: pre-wrap; background: var(--code-bg); padding: 8px 10px; border-radius: 8px; max-height: 240px; overflow: auto; }
+.hidden-note { display: block; margin-top: 6px; font-size: .8rem; color: var(--muted); }
+.chat-tools { flex-wrap: wrap; }
+.chat-tools button, .show-real { white-space: nowrap; }

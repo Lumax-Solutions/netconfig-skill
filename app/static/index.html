@@ -85,11 +85,18 @@
 
       <details class="paste" id="paste-box">
         <summary>Paste the device's current configuration <em class="muted">(optional, recommended for changes and reviews)</em></summary>
-        <p class="small muted">Passwords, keys and community strings are removed on this computer before anything is sent to the AI. You'll see exactly what was removed.</p>
+        <p class="small muted">It's cleaned on this computer before anything is sent to the AI (see <b>Privacy</b> below). You'll see exactly what was hidden.</p>
         <textarea id="config" rows="10" spellcheck="false" placeholder="Paste here (show running-config, show full-configuration, export, …)"></textarea>
-        <label class="inline-check small"><input type="checkbox" id="mask-ips"> Also replace public IP addresses with example addresses</label>
         <div id="redact-report" class="redact" hidden></div>
       </details>
+
+      <fieldset class="privacy" id="privacy">
+        <legend>🛡 Privacy: hidden on this computer before sending</legend>
+        <label class="inline-check small"><input type="checkbox" checked disabled> Passwords, keys and SNMP communities <em class="muted">(always)</em></label>
+        <label class="inline-check small"><input type="checkbox" id="hide-ips" checked> Public IP addresses <em class="muted">(replaced with example addresses; subnets stay consistent)</em></label>
+        <label class="inline-check small"><input type="checkbox" id="hide-names" checked> Names: host names, domains, user names, descriptions, locations, contacts, banners, e-mail addresses</label>
+        <p class="small muted">This also applies to what you type and to follow-ups. Answers show your real names and IPs again, on this computer only. Private addresses (10.x, 192.168.x, 172.16–31.x) are kept: the AI needs them and they aren't reachable from the internet.</p>
+      </fieldset>
 
       <div class="nav">
         <button class="ghost" data-back="2">← Back</button>
@@ -107,6 +114,7 @@
     <div class="chat-tools">
       <span id="chat-context" class="muted small"></span>
       <span class="spacer"></span>
+      <label class="inline-check small show-real" title="Answers use placeholders (HOST-1, DESC-2, 198.51.100.x …). Show your real names and IPs instead; this happens on this computer only."><input type="checkbox" id="show-real" checked> Show my real names and IPs</label>
       <button class="ghost" id="btn-export">⬇ Save as file</button>
       <button class="ghost" id="btn-new">＋ New request</button>
     </div>
@@ -114,7 +122,7 @@
     <form id="followup" class="followup">
       <textarea id="followup-text" rows="2" dir="auto" placeholder="Ask a follow-up, or paste the output of a command the answer asked you to run…"></textarea>
       <div class="followup-actions">
-        <button type="button" class="ghost small" id="btn-redact-followup" title="Remove secrets from what you pasted">🛡 Remove secrets</button>
+        <span class="small muted followup-note">🛡 Secrets (and names/IPs, if chosen) are hidden automatically when you send.</span>
         <button type="button" class="ghost" id="btn-stop" hidden>■ Stop</button>
         <button type="submit" class="primary" id="btn-send">Send</button>
       </div>

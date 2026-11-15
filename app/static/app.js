@@ -20,7 +20,7 @@ const TASK_INFO = {
   question: { ico: "💬", desc: "Learn a concept or find the right command", ex: ["What is the difference between NAT and PAT?", "How do I see which interfaces are up?", "How do I save the configuration?"] },
 };
 
-const state = { meta: null, vendors: [], vendor2: null, task: null, live: null, conn: null, messages: [], busy: false, ctrl: null, chatCtx: {} };
+const state = { meta: null, vendors: [], vendor2: null, task: null, live: null, conn: null, messages: [], shown: [], busy: false, ctrl: null, chatCtx: {} };
 
 /* ---------------------------------------------------------------- theme */
 const savedTheme = (() => { try { return localStorage.getItem("theme"); } catch { return null; } })();
@@ -114,51 +114,86 @@ function setSeg(name, v) {
 }
 ["live", "conn"].forEach((name) => $$(`#${name} button`).forEach((b) => (b.onclick = () => setSeg(name, b.dataset.v))));
 
-/* ---------------------------------------------------------------- secret removal */
-let sanitized = { text: "", findings: [], source: null };
-async function sanitizeConfig() {
-  const raw = $("#config").value;
-  const mask = $("#mask-ips").checked;
-  if (!raw.trim()) { $("#redact-report").hidden = true; sanitized = { text: "", findings: [], source: raw }; return sanitized; }
-  if (sanitized.source === raw && sanitized.mask === mask) return sanitized;
-  const r = await api("/api/sanitize", { text: raw, mask_public_ips: mask });
-  sanitized = { text: r.text, findings: r.findings, source: raw, mask };
-  showRedactReport(r.findings);
-  return sanitized;
+/* ---------------------------------------------------------------- privacy */
+// Everything sent to the AI goes through /api/sanitize first (on this computer). `priv.state` keeps
+// the mappings for the whole conversation, so a name/IP/secret keeps its placeholder; `priv.restore`
+// turns name and IP placeholders back into the real values for display only. Secrets never come back.
+const priv = { state: null, restore: [] };
+const prefs = (() => { try { return JSON.parse(localStorage.getItem("privacy") || "{}"); } catch { return {}; } })();
+if (prefs.hideIps === false) $("#hide-ips").checked = false;
+if (prefs.hideNames === false) $("#hide-names").checked = false;
+for (const id of ["hide-ips", "hide-names"]) {
+  $("#" + id).addEventListener("change", () => {
+    try { localStorage.setItem("privacy", JSON.stringify({ hideIps: $("#hide-ips").checked, hideNames: $("#hide-names").checked })); } catch {}
+    previewConfig(true);
+  });
 }
-function showRedactReport(findings) {
-  const box = $("#redact-report"); box.hidden = false; box.innerHTML = "";
-  const secrets = findings.filter((f) => !f.original_hint);
-  const ips = findings.filter((f) => f.original_hint);
+const privOpts = () => ({ mask_public_ips: $("#hide-ips").checked, hide_names: $("#hide-names").checked });
+
+async function protect(text) {   // sanitize text for sending, extending the conversation's mappings
+  const r = await api("/api/sanitize", { text, ...privOpts(), state: priv.state });
+  priv.state = r.state; priv.restore = r.restore;
+  return r;
+}
+
+let previewKey = "";
+async function previewConfig(force) {   // preview only: shows what will be hidden, keeps no state
+  const raw = $("#config").value, key = raw + JSON.stringify(privOpts());
+  if (!raw.trim()) { $("#redact-report").hidden = true; previewKey = ""; return; }
+  if (key === previewKey && !force) return;
+  previewKey = key;
+  const r = await api("/api/sanitize", { text: raw, ...privOpts() });
+  showRedactReport(r.findings, $("#redact-report"));
+}
+function showRedactReport(findings, box) {
+  box.hidden = false; box.innerHTML = "";
+  const secrets = findings.filter((f) => f.kind === "secret");
+  const others = findings.filter((f) => f.kind !== "secret");
   const head = document.createElement("div");
   head.innerHTML = secrets.length
-    ? `🛡 <b>${secrets.length} secret${secrets.length > 1 ? "s" : ""} removed</b> before sending. They will appear as <code>&lt;REDACTED-n&gt;</code> in the answer: put your real value back when you paste.`
-    : "🛡 No passwords or keys were found. Check the text yourself before sending if you're unsure.";
+    ? `🛡 <b>${secrets.length} secret${secrets.length > 1 ? "s" : ""} removed</b>. They appear as <code>&lt;REDACTED-n&gt;</code> in the answer: put your real value back when you paste.`
+    : "🛡 No passwords or keys were found. Check the text yourself if you're unsure.";
   box.appendChild(head);
-  if (findings.length) {
+  if (secrets.length) {
     const ul = document.createElement("ul");
     for (const f of secrets) { const li = document.createElement("li"); li.textContent = `${f.token}: ${f.label}${f.count > 1 ? ` (×${f.count})` : ""}`; ul.appendChild(li); }
-    for (const f of ips) { const li = document.createElement("li"); li.textContent = `${f.original_hint} → ${f.token} (public IP)`; ul.appendChild(li); }
     box.appendChild(ul);
+  }
+  if (others.length) {
+    const p = document.createElement("div"); p.style.marginTop = "8px";
+    p.innerHTML = `<b>${others.length} name${others.length > 1 ? "s" : ""} / address${others.length > 1 ? "es" : ""} hidden</b>. The AI sees the placeholder; answers show your real value again.`;
+    const t = document.createElement("table");
+    t.innerHTML = "<tr><th>Your value (stays here)</th><th>What the AI sees</th><th>Type</th></tr>";
+    for (const f of others) {
+      const tr = document.createElement("tr");
+      for (const v of [f.original, f.token, f.kind === "ip" ? "public IP" : f.kind]) { const td = document.createElement("td"); td.textContent = v; tr.appendChild(td); }
+      t.appendChild(tr);
+    }
+    box.append(p, t);
   }
 }
 let sanTimer;
-$("#config").addEventListener("input", () => { clearTimeout(sanTimer); sanTimer = setTimeout(sanitizeConfig, 500); });
-$("#mask-ips").onchange = sanitizeConfig;
+$("#config").addEventListener("input", () => { clearTimeout(sanTimer); sanTimer = setTimeout(previewConfig, 500); });
 
-$("#btn-redact-followup").onclick = async () => {
-  const ta = $("#followup-text");
-  if (!ta.value.trim()) return;
-  const r = await api("/api/sanitize", { text: ta.value, mask_public_ips: $("#mask-ips").checked });
-  ta.value = r.text;
-  const n = r.findings.filter((f) => !f.original_hint).length;
-  toast(n ? `Removed ${n} secret${n > 1 ? "s" : ""}.` : "No secrets found.");
-};
+/* Put real names / IPs back into an answer (display only). */
+function restoreText(text) {
+  if (!$("#show-real").checked || !priv.restore.length) return text;
+  if (!priv._rx || priv._rxFor !== priv.restore) {
+    const esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    priv._map = new Map(priv.restore);
+    priv._rx = new RegExp("(?<![\\w:@-])(" + priv.restore.map((p) => esc(p[0])).join("|") + ")(?![\\w:@-]|\\.\\w)", "g");
+    priv._rxFor = priv.restore;
+  }
+  return text.replace(priv._rx, (m) => priv._map.get(m) ?? m);
+}
+$("#show-real").addEventListener("change", () => {
+  for (const el of $$("#messages .msg.assistant")) if (el._raw !== undefined) render(el, el._raw, el._think || "", false);
+});
 
 /* ---------------------------------------------------------------- ask */
 $("#btn-ask").onclick = async () => {
   const req = $("#request").value.trim();
-  const cfg = await sanitizeConfig();
+  const cfg = { text: $("#config").value.trim() };
   if (!req && !cfg.text) { $("#request").focus(); toast("Please describe what you need first."); return; }
   const t = state.task, lines = [];
   lines.push(`Device: ${allVendors().map(vendorLabel).join(" and ")}`);
@@ -173,9 +208,10 @@ $("#btn-ask").onclick = async () => {
   }
   if ($("#ipv6").checked) lines.push("The network uses IPv6 as well as IPv4.");
   lines.push("", req || "Please review the configuration below.");
-  if (cfg.text) lines.push("", "Current configuration (secrets removed by the app):", "```text", cfg.text, "```");
+  if (cfg.text) lines.push("", "Current configuration (cleaned by the app before sending):", "```text", cfg.text, "```");
   state.chatCtx = { vendors: allVendors(), task: t, ipv6: $("#ipv6").checked, has_config: !!cfg.text };
-  state.messages = [];
+  state.messages = []; state.shown = [];
+  priv.state = null; priv.restore = [];
   $("#messages").innerHTML = "";
   $("#wizard").hidden = true; $("#chat").hidden = false;
   $("#chat-context").textContent = $("#step3-summary").textContent;
@@ -218,7 +254,9 @@ function splitThinking(text) {
 }
 
 function render(el, text, thinking, streaming) {
+  el._raw = text; el._think = thinking;
   const s = splitThinking(text);
+  s.out = restoreText(s.out);
   const think = (thinking + "\n" + s.think).trim();
   let body = el.querySelector(".body");
   if (!body) {
@@ -260,8 +298,19 @@ function fallbackCopy(t) {
 }
 
 async function send(text) {
-  state.messages.push({ role: "user", content: text });
-  addMessage("user", text);
+  let sent;
+  try { sent = await protect(text); }
+  catch (e) { toast("Couldn't prepare the message safely: " + e.message); return; }
+  state.messages.push({ role: "user", content: sent.text });
+  state.shown.push(text);
+  const um = addMessage("user", text);
+  if (sent.findings.length) {
+    const d = document.createElement("details"); d.className = "sent-view";
+    const n = sent.findings.reduce((a, f) => a + f.count, 0);
+    d.innerHTML = `<summary class="hidden-note">🛡 ${n} item${n > 1 ? "s" : ""} hidden before sending · show what the AI received</summary><pre></pre>`;
+    d.querySelector("pre").textContent = sent.text;
+    um.appendChild(d);
+  }
   const el = addMessage("assistant");
   let out = "", thinking = "", meta = null;
   render(el, "", "", true);
@@ -304,7 +353,7 @@ async function send(text) {
     cancelAnimationFrame(raf);
     const clean = splitThinking(out).out;
     if (clean) { render(el, out, thinking, false); state.messages.push({ role: "assistant", content: clean }); }
-    else if (!el.classList.contains("error")) { state.messages.pop(); el.remove(); }
+    else if (!el.classList.contains("error")) { state.messages.pop(); state.shown.pop(); el.remove(); }
     if (meta) $("#chat-context").textContent = `${$("#step3-summary").textContent} · ${meta.provider || ""} ${meta.model || ""}`;
     setBusy(false);
   }
@@ -323,7 +372,8 @@ $("#btn-new").onclick = () => {
 
 $("#btn-export").onclick = () => {
   const md = [`# NetConfig Assistant — ${$("#chat-context").textContent}`, `_Saved ${new Date().toLocaleString()}_`, ""];
-  for (const m of state.messages) md.push(m.role === "user" ? "## You" : "## Assistant", "", m.content, "");
+  // names and IPs restored (this file stays on your computer); passwords and keys stay hidden
+  for (const m of state.messages) md.push(m.role === "user" ? "## You" : "## Assistant", "", restoreText(m.content), "");
   const blob = new Blob([md.join("\n")], { type: "text/markdown" });
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
   a.download = `netconfig-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-")}.md`; a.click();

@@ -20,7 +20,7 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from sanitize import sanitize
+from sanitize import restore_pairs, sanitize
 
 APP_DIR = Path(__file__).resolve().parent
 STATIC = APP_DIR / "static"
@@ -82,6 +82,12 @@ rules and output structure), and also:
 - You cannot connect to devices; the person runs every command themselves. Never ask for passwords.
 - Values shown as <REDACTED-n> were secrets removed by the app. Keep them as <REDACTED-n> in commands and
   tell the person to put their real value back in before pasting.
+- For privacy the app may also replace names and public IP addresses with placeholders: HOST-n (host
+  names), domainN.example (domains), USER-n (user names), DESC-n (descriptions/comments), LOCATION-n,
+  CONTACT-n, BANNER-n, userN@example.com, and public IPs mapped into 198.51.100.0/24, 203.0.113.0/24,
+  192.0.2.0/24, 198.18.0.0/15 or 2001:db8::/32 (addresses in the same subnet stay in the same subnet).
+  Treat them as the real values: use them unchanged in commands and explanations, don't comment on them,
+  don't ask what they really are. The app shows the person their real values.
 - If something essential for a safe change is missing (OS version for a live device, how they are connected),
   ask for it first in at most 3 short questions, and explain why each matters.
 - Reply in the same language the person writes in.
@@ -382,8 +388,9 @@ class Handler(BaseHTTPRequestHandler):
             except Exception as e:
                 return self._json({"error": friendly_error(e, s)}, 502)
         if self.path == "/api/sanitize":
-            clean, found = sanitize(body.get("text", ""), mask_public_ips=bool(body.get("mask_public_ips")))
-            return self._json({"text": clean, "findings": found})
+            clean, found, st = sanitize(body.get("text", ""), mask_public_ips=bool(body.get("mask_public_ips")),
+                                        hide_names=bool(body.get("hide_names")), state=body.get("state"))
+            return self._json({"text": clean, "findings": found, "state": st, "restore": restore_pairs(st)})
         if self.path == "/api/chat":
             return self._chat(body)
         return self._json({"error": "not found"}, 404)

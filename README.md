@@ -14,6 +14,16 @@ in, so you don't break production or lock yourself out of a remote box.
 > **Not a developer?** Use the **[NetConfig Assistant desktop app](#desktop-app-for-non-experts)**:
 > pick your device, say what you want, and get step-by-step commands with Copy buttons.
 
+**New in 1.4.1**
+- **Private by default:** the desktop app now hides public IPs and identifying names (host names,
+  domains, users, descriptions, locations) as well as passwords before anything is sent to an AI,
+  without breaking the diagnosis, and shows your real values again in the answers.
+  [How it works](app/README.md#privacy-what-leaves-your-computer)
+- **Hermes Agent:** one command (`hermes skills install … --force`), and the install scripts now
+  set it up for Hermes on Windows, macOS, Linux and WSL. [Details](INSTALL.md#hermes-agent)
+- **Safer examples:** Juniper commit-confirmed and BGP examples fixed after an independent review,
+  and CI now rejects those mistakes. See the [CHANGELOG](CHANGELOG.md).
+
 ## See it work: tighten SSH without locking yourself out
 
 > *"I'm connected over SSH from the admin host 198.51.100.10 (IPv6 2001:db8:100::10). Restrict NEW SSH
@@ -103,9 +113,13 @@ No agent or coding tool needed.
 
 - **Your AI, your choice:** a model on your computer (llama.cpp, Ollama, LM Studio: private and
   free) or Claude, OpenAI and other services.
-- **Secrets stay home:** passwords and keys in pasted configs are removed on your computer before
-  sending, and the app shows what it removed.
+- **Private by default:** before sending, on your computer, passwords and keys are removed and
+  public IPs and identifying names (host names, domains, users, descriptions, locations) are
+  replaced with consistent placeholders that keep subnets and logic intact. The app shows exactly
+  what it hid, and answers (and Copy buttons) show your real names and IPs again.
 - **Advice only:** it never connects to your devices.
+
+![Before sending: secrets removed, names and public IPs replaced, with a table of what the AI sees](app/docs/06-secrets-removed.jpg)
 
 **Get it:** download `NetConfig-Assistant.zip` from the
 [latest release](https://github.com/Lumax-Solutions/netconfig-skill/releases/latest), unzip it, and
@@ -278,6 +292,9 @@ without the skill and grade answers against the `graders/` files by hand.
 - Re-confirm the 7 `UNVERIFIED` claims in [SOURCES.md](SOURCES.md) (mostly Juniper pages that
   block automated checks).
 - More IPv6 depth for the Standard platforms.
+- **Palo Alto and Juniper back to Detailed:** IPsec, HA, GlobalProtect and route-based VPN
+  examples, checked against vendor documentation.
+- One complete example answer for a live-device change, to keep answers consistent.
 
 See [CHANGELOG.md](CHANGELOG.md) and [Releases](https://github.com/Lumax-Solutions/netconfig-skill/releases).
 

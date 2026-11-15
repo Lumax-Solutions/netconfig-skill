@@ -39,6 +39,17 @@ Theme: first-class Hermes Agent support.
   `networking`, Hermes' security scanner run on the whole skill folder, `evals/` included (the job fails on *dangerous*; *caution* is expected), and on `main`
   a real `hermes skills install … --force` from GitHub, `hermes skills list` and uninstall.
 
+- **Desktop app privacy:** besides passwords and keys (always removed), the app now hides public IP
+  addresses and identifying names by default: host names, domains, user names, descriptions/comments,
+  SNMP location/contact, banners and e-mail addresses (Cisco, FortiGate, Junos, PAN-OS, MikroTik,
+  Huawei, Aruba, Arista, Check Point). Placeholders stay the same for the whole conversation, in the
+  config, in what the user types and in follow-ups (now cleaned automatically). Public IPs are
+  mapped one /24 (IPv6: /48) at a time keeping the host part, so subnets, gateways and NAT stay
+  consistent; generic descriptions ("WAN to ISP") and well-known resolvers are kept. The model is told
+  the values are placeholders; answers and Copy buttons show the real names and IPs again on the
+  user's computer only. Each message has "show what the AI received". Secret numbering now
+  continues across messages. `app/test_app.py` grows from 31 to 66 checks.
+
 ### Tested on real machines
 - Windows, PowerShell 5.1, Hermes 0.20.5: Hermes path, DANGEROUS abort (against the old main),
   copy install without `evals/`, uninstall of both copies, nothing written to `%USERPROFILE%\.hermes`;

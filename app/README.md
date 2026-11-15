@@ -19,7 +19,7 @@ test, and only then save.
 | **Devices** | Cisco (routers, switches, ASA, Nexus), FortiGate, Palo Alto, Juniper, MikroTik, Check Point, Huawei/H3C, Aruba/HPE, Arista, SonicWall, pfSense, VyOS, Sophos, UniFi, Linux firewalls, AWS/Azure/GCP firewalls |
 | **Tasks** | set up something new, change a running device safely, fix a problem, review a config for security problems, move to another brand, ask a question |
 | **AI** | a model on your own computer (llama.cpp, Ollama, LM Studio) or a cloud service (Claude, OpenAI, others) |
-| **Privacy** | runs on your computer; passwords and keys are removed from pasted configs before anything is sent |
+| **Privacy** | runs on your computer; before anything is sent, passwords and keys are removed and (by default) public IPs and identifying names are replaced, then shown back to you in the answers |
 | **Safety** | advice only: the app never connects to your devices. You read and paste every command yourself |
 | **Languages** | answers come back in the language you write in (English, Arabic, …) |
 | **Needs** | Windows, macOS or Linux, and Python 3.9 or newer. Nothing else to install |
@@ -156,10 +156,13 @@ If two brands are involved (for example a VPN between a FortiGate and a Cisco ro
 3. **Software version.** Optional, but it helps a lot: commands change between versions. The app
    shows the command that displays it for your device (for a FortiGate: `get system status`).
 4. **Paste the current configuration** (optional; recommended for changes, problems and reviews).
-   Passwords and keys are removed **on your computer** before anything is sent. A blue box shows
-   exactly what was removed:
+   It is cleaned **on your computer** before anything is sent (see [Privacy](#privacy-what-leaves-your-computer)).
+   A blue box shows exactly what will be hidden and what the AI will see instead:
 
-![Secrets are removed before sending, and the app lists them](docs/06-secrets-removed.jpg)
+![Before sending: secrets removed, names and public IPs replaced, with a table of what the AI will see](docs/06-secrets-removed.jpg)
+
+5. **Privacy** (below the paste box): public IP addresses and names are hidden by default. Untick
+   them only if you're sure, for example with an AI on your own computer.
 
 Then click **Get my answer**.
 
@@ -199,8 +202,8 @@ keep, print or send to a colleague. **New request** starts again.
 ## 5. Follow-up questions
 
 Type in the box at the bottom and click **Send** (or press Ctrl+Enter). Use it to:
-- paste the **output of a command** the answer asked you to run (click **🛡 Remove secrets**
-  first if the output might contain passwords),
+- paste the **output of a command** the answer asked you to run (it is cleaned the same way as the
+  config, automatically, with the same placeholders),
 - correct an assumption ("the internet port is `port1`, not `wan1`"),
 - ask what a step means, or ask for the next step.
 
@@ -214,16 +217,35 @@ The 🌓 button at the top switches between light and dark mode.
 
 | | With an AI on your computer | With a cloud AI |
 |---|---|---|
-| Your questions and pasted text | stay on your computer | sent to that AI company |
-| Passwords, keys, SNMP communities in pasted configs | removed before sending | removed before sending |
-| Public IP addresses | kept | kept, unless you tick *Also replace public IP addresses* |
+| Your questions and pasted text | stay on your computer | sent to that AI company, **after cleaning** |
+| Passwords, keys, SNMP communities | removed (always) | removed (always) |
+| Public IP addresses | replaced (default; can be turned off) | replaced (default) |
+| Host names, domains, user names, descriptions, locations, contacts, banners, e-mail addresses | replaced (default; can be turned off) | replaced (default) |
+| Private addresses (10.x, 192.168.x, 172.16–31.x), interface names, VLANs, rules, object names | kept: the AI needs them to find the problem | kept |
 | Settings and API key | saved on your computer | saved on your computer |
+
+**How the cleaning keeps answers accurate:**
+- Every value gets a placeholder that never changes during the conversation, in your config, in
+  what you type and in follow-ups: `CAI-RTR01` → `HOST-1`, `jsmith` → `USER-1`,
+  `corp.example-company.com` → `domain1.example`, a description → `DESC-1`.
+- Public IPs move to documentation ranges **one /24 at a time, keeping the last number**
+  (`41.33.77.10` → `198.51.100.10`, its gateway `41.33.77.9` → `198.51.100.9`), so addresses that
+  were in the same subnet still are, and masks, routes and NAT still make sense. IPv6 works the
+  same way inside `2001:db8::/32`.
+- Generic descriptions such as "WAN to ISP" or "GUEST-WIFI" and well-known public resolvers
+  (8.8.8.8, 1.1.1.1 …) are kept: they help the diagnosis and say nothing about you.
+- The AI is told these are placeholders and uses them unchanged. **Answers show your real names
+  and IPs again**, on your computer only (untick *Show my real names and IPs* to see what the AI
+  wrote). Copy buttons copy the real values. Passwords and keys never come back: put them in
+  yourself where you see `<REDACTED-n>`.
+- Under each of your messages, *show what the AI received* shows the exact text that was sent.
 
 - The app only accepts connections from your own computer (`127.0.0.1`) and refuses requests from
   other websites. It doesn't collect statistics or send anything anywhere else.
-- Secret removal covers the usual formats (Cisco, FortiGate, Juniper, Palo Alto, MikroTik, Huawei,
-  private keys, API tokens) but can miss unusual ones. **Check the blue "removed" box, and the text,
-  before sending a config to a cloud AI.**
+- The cleaning covers the usual formats (Cisco, FortiGate, Juniper, Palo Alto, MikroTik, Huawei,
+  Aruba, Arista, Check Point, private keys, API tokens) but can miss unusual ones, such as a
+  company name inside an object name or an ACL remark in an unusual place. **Check the blue box and
+  "show what the AI received" before sending a config to a cloud AI.**
 - Settings are saved in `%APPDATA%\netconfig-app\settings.json` (Windows) or
   `~/.config/netconfig-app/settings.json` (macOS/Linux). An API key is stored there **unencrypted**.
   Don't save a cloud API key on a computer account other people use.
